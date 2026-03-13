@@ -17,6 +17,10 @@ struct GameCalendarApp: App {
         } catch {
             fatalError("Klarte ikke å opprette ModelContainer: \(error)")
         }
+
+        #if os(macOS)
+        BackgroundRefreshService.shared.start(container: container)
+        #endif
     }
 
     var body: some Scene {
@@ -24,5 +28,13 @@ struct GameCalendarApp: App {
             ContentView()
         }
         .modelContainer(container)
+
+        #if os(macOS)
+        MenuBarExtra("Game Calendar", systemImage: "gamecontroller") {
+            MenuBarView()
+                .modelContainer(container)
+        }
+        .menuBarExtraStyle(.window)
+        #endif
     }
 }

@@ -8,6 +8,20 @@ struct GameDetailSheet: View {
     let state: AppState
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query private var wishlistEntries: [WishlistEntry]
+
+    private var isWishlisted: Bool {
+        wishlistEntries.contains { $0.game.externalId == game.externalId }
+    }
+
+    private func toggleWishlist() {
+        if let entry = wishlistEntries.first(where: { $0.game.externalId == game.externalId }) {
+            modelContext.delete(entry)
+        } else {
+            modelContext.insert(WishlistEntry(game: game))
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -44,6 +58,13 @@ struct GameDetailSheet: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Lukk") { dismiss() }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: toggleWishlist) {
+                    Image(systemName: isWishlisted ? "heart.fill" : "heart")
+                        .foregroundStyle(isWishlisted ? .red : .primary)
+                }
+                .help(isWishlisted ? "Fjern fra ønskeliste" : "Legg til ønskeliste")
             }
             ToolbarItem(placement: .primaryAction) {
                 if let url = game.websiteUrl.flatMap({ URL(string: $0) }) {
