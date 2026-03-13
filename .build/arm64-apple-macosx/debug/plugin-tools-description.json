@@ -1,0 +1,467 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.GameCalendarNative-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/sources",
+      "importPath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/GameCalendarApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/GameRelease.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/ImportRun.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/SourceRecord.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/WishlistEntry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ContentSafetyFilter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbTokenService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ImportActor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/KeychainService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/NormalizedGame.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "GameCalendarNative",
+      "moduleOutputPath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/Modules/GameCalendarNative.swiftmodule",
+      "objects" : [
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentView.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameCalendarApp.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameRelease.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportRun.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/SourceRecord.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/WishlistEntry.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentSafetyFilter.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbClient.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbModels.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbTokenService.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportActor.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/KeychainService.swift.o",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/NormalizedGame.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "GameCalendarNative_main",
+        "-swift-version",
+        "5",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "gamecalendarnative"
+      ],
+      "outputFileMapPath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameCalendarApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameRelease.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportRun.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/SourceRecord.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/WishlistEntry.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentSafetyFilter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbTokenService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportActor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/KeychainService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/NormalizedGame.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/Modules/GameCalendarNative.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/ContentView.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/GameCalendarApp.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/GameRelease.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/ImportRun.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/SourceRecord.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/WishlistEntry.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ContentSafetyFilter.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbClient.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbModels.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbTokenService.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ImportActor.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/KeychainService.swift",
+        "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/NormalizedGame.swift"
+      ],
+      "tempsPath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "GameCalendarNative" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "GameCalendarNative",
+      "-package-name",
+      "gamecalendarnative",
+      "-c",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/ContentView.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/GameCalendarApp.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/GameRelease.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/ImportRun.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/SourceRecord.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/WishlistEntry.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ContentSafetyFilter.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbClient.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbModels.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbTokenService.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ImportActor.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/KeychainService.swift",
+      "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/NormalizedGame.swift",
+      "-I",
+      "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "GameCalendarNative_main",
+      "-swift-version",
+      "5",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "gamecalendarnative",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "GameCalendarNative" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative-entitlement.plist"
+    },
+    "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/App/GameCalendarApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/GameRelease.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/ImportRun.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/SourceRecord.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Models/WishlistEntry.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ContentSafetyFilter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbModels.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/IgdbTokenService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/ImportActor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/KeychainService.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/Sources/GameCalendarNative/Services/NormalizedGame.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/sources"
+    },
+    "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentSafetyFilter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameCalendarApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/GameRelease.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbModels.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/IgdbTokenService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportActor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/ImportRun.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/KeychainService.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/NormalizedGame.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/SourceRecord.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.build/WishlistEntry.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/GameCalendarNative.product/Objects.LinkFileList"
+    },
+    "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/thomasjohannessen/GameCalendarNative/.build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+    }
+  }
+}
