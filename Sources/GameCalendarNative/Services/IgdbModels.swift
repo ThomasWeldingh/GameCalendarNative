@@ -36,17 +36,17 @@ struct IgdbCover: Codable {
 
 struct IgdbPlatform: Codable {
     let id: Int
-    let name: String
+    let name: String?
 }
 
 struct IgdbGenre: Codable {
-    let name: String
+    let name: String?
 }
 
 struct IgdbAgeRating: Codable {
     /// 1 = ESRB, 2 = PEGI
-    let category: Int
-    let rating: Int
+    let category: Int?
+    let rating: Int?
 }
 
 struct IgdbTheme: Codable {
@@ -54,8 +54,8 @@ struct IgdbTheme: Codable {
 }
 
 struct IgdbVideo: Codable {
-    let videoId: String
-    let name: String
+    let videoId: String?
+    let name: String?
 
     enum CodingKeys: String, CodingKey {
         case name
@@ -64,23 +64,23 @@ struct IgdbVideo: Codable {
 }
 
 struct IgdbScreenshot: Codable {
-    let url: String
+    let url: String?
 }
 
 struct IgdbInvolvedCompany: Codable {
-    let developer: Bool
-    let publisher: Bool
+    let developer: Bool?
+    let publisher: Bool?
     let company: IgdbCompany?
 }
 
 struct IgdbCompany: Codable {
-    let name: String
+    let name: String?
 }
 
 struct IgdbWebsite: Codable {
     /// 1=Official 13=Steam 16=Epic 17=GOG
-    let category: Int
-    let url: String
+    let category: Int?
+    let url: String?
 }
 
 // MARK: - Twitch OAuth token response

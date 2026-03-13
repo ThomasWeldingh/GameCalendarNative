@@ -97,7 +97,8 @@ struct IgdbClient {
             Date(timeIntervalSince1970: TimeInterval($0))
         }
 
-        let coverUrl: String? = g.cover?.url.flatMap { raw -> String? in
+        let coverUrl: String? = g.cover.flatMap { cover -> String? in
+            guard let raw = cover.url else { return nil }
             let url = raw.hasPrefix("//") ? "https:" + raw : raw
             return url.replacingOccurrences(of: "t_thumb", with: "t_720p")
         }
@@ -107,23 +108,24 @@ struct IgdbClient {
             .uniqued()
 
         let genres = (g.genres ?? [])
-            .map(\.name)
+            .compactMap(\.name)
             .filter { !$0.isEmpty }
             .uniqued()
 
         let videoIds = Array(
-            (g.videos ?? []).map(\.videoId).filter { !$0.isEmpty }.prefix(2)
+            (g.videos ?? []).compactMap(\.videoId).filter { !$0.isEmpty }.prefix(2)
         )
 
         let screenshotUrls = Array(
-            (g.screenshots ?? []).map { shot -> String in
-                let url = shot.url.hasPrefix("//") ? "https:" + shot.url : shot.url
+            (g.screenshots ?? []).compactMap { shot -> String? in
+                guard let raw = shot.url else { return nil }
+                let url = raw.hasPrefix("//") ? "https:" + raw : raw
                 return url.replacingOccurrences(of: "t_thumb", with: "t_1080p")
             }.prefix(5)
         )
 
-        let developer = g.involvedCompanies?.first { $0.developer }?.company?.name
-        let publisher = g.involvedCompanies?.first { $0.publisher }?.company?.name
+        let developer = g.involvedCompanies?.first { $0.developer == true }?.company?.name ?? nil
+        let publisher = g.involvedCompanies?.first { $0.publisher == true }?.company?.name ?? nil
         let websiteUrl = extractWebsiteUrl(g.websites)
 
         let contentJson = (try? JSONEncoder().encode(g))
@@ -154,10 +156,10 @@ struct IgdbClient {
 
     private func extractWebsiteUrl(_ sites: [IgdbWebsite]?) -> String? {
         guard let sites, !sites.isEmpty else { return nil }
-        return sites.first { $0.category == 1 }?.url   // Official
-            ?? sites.first { $0.category == 13 }?.url  // Steam
-            ?? sites.first { $0.category == 16 }?.url  // Epic
-            ?? sites.first { $0.category == 17 }?.url  // GOG
+        return sites.first { $0.category == 1 }.flatMap(\.url)   // Official
+            ?? sites.first { $0.category == 13 }.flatMap(\.url)  // Steam
+            ?? sites.first { $0.category == 16 }.flatMap(\.url)  // Epic
+            ?? sites.first { $0.category == 17 }.flatMap(\.url)  // GOG
     }
 
     private func extractAgeRating(_ ratings: [IgdbAgeRating]?) -> String? {
@@ -183,6 +185,7 @@ struct IgdbClient {
         }
         return nil
     }
+
 }
 
 // MARK: - Sequence helpers
