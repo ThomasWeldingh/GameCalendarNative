@@ -10,25 +10,28 @@ struct ImportStats {
 
 /// Background actor that runs the full IGDB import pipeline against a SwiftData store.
 actor ImportActor {
-    private let modelContext: ModelContext
+    // Store container, not context — context is created on the actor's executor in run()
+    private let modelContainer: ModelContainer
     private let igdbClient: IgdbClient
     private let safetyFilter = ContentSafetyFilter()
 
     init(modelContainer: ModelContainer, igdbClient: IgdbClient) {
-        self.modelContext = ModelContext(modelContainer)
+        self.modelContainer = modelContainer
         self.igdbClient = igdbClient
     }
 
     // MARK: - Public
 
     func run() async throws -> ImportStats {
-        let lastCompleted = try lastCompletedImportDate()
+        // Create ModelContext here so it lives on this actor's executor (not main thread)
+        let modelContext = ModelContext(modelContainer)
+        let lastCompleted = try lastCompletedImportDate(in: modelContext)
         let run = ImportRun(source: "igdb")
         modelContext.insert(run)
         try modelContext.save()
 
         do {
-            let stats = try await fetchAndProcess(updatedSince: lastCompleted)
+            let stats = try await fetchAndProcess(updatedSince: lastCompleted, in: modelContext)
             run.completedAt = Date()
             run.status = "Completed"
             run.itemsInserted = stats.inserted
@@ -48,7 +51,7 @@ actor ImportActor {
 
     // MARK: - Private
 
-    private func lastCompletedImportDate() throws -> Date? {
+    private func lastCompletedImportDate(in modelContext: ModelContext) throws -> Date? {
         var descriptor = FetchDescriptor<ImportRun>(
             predicate: #Predicate { $0.status == "Completed" }
         )
@@ -57,10 +60,9 @@ actor ImportActor {
         return try modelContext.fetch(descriptor).first?.completedAt
     }
 
-    private func fetchAndProcess(updatedSince: Date?) async throws -> ImportStats {
+    private func fetchAndProcess(updatedSince: Date?, in modelContext: ModelContext) async throws -> ImportStats {
         let cutoff = Calendar.current.date(byAdding: .year, value: -1, to: Date())!
 
-        // Fetch dated and TBA games concurrently
         async let datedTask = igdbClient.fetchGames(from: cutoff, updatedSince: updatedSince)
         async let tbaTask = igdbClient.fetchTbaGames(updatedSince: updatedSince)
         let allGames = try await datedTask + tbaTask
@@ -73,14 +75,14 @@ actor ImportActor {
                 stats.filtered += 1
                 continue
             }
-            try processGame(game, stats: &stats)
+            try processGame(game, stats: &stats, in: modelContext)
         }
 
         try modelContext.save()
         return stats
     }
 
-    private func processGame(_ game: NormalizedGame, stats: inout ImportStats) throws {
+    private func processGame(_ game: NormalizedGame, stats: inout ImportStats, in modelContext: ModelContext) throws {
         let externalId = game.externalId
         var descriptor = FetchDescriptor<SourceRecord>(
             predicate: #Predicate { $0.externalId == externalId && $0.source == "igdb" }
