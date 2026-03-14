@@ -8,30 +8,27 @@ struct ImportStats {
     var filtered: Int = 0
 }
 
-/// Background actor that runs the full IGDB import pipeline against a SwiftData store.
+/// Background actor that syncs game data from the backend API into the local SwiftData store.
+/// Uses content-hash deduplication so unchanged games are skipped instantly.
 actor ImportActor {
-    // Store container, not context — context is created on the actor's executor in run()
     private let modelContainer: ModelContainer
-    private let igdbClient: IgdbClient
-    private let safetyFilter = ContentSafetyFilter()
+    private let apiClient: ApiSyncClient
 
-    init(modelContainer: ModelContainer, igdbClient: IgdbClient) {
+    init(modelContainer: ModelContainer, apiClient: ApiSyncClient) {
         self.modelContainer = modelContainer
-        self.igdbClient = igdbClient
+        self.apiClient = apiClient
     }
 
     // MARK: - Public
 
     func run() async throws -> ImportStats {
-        // Create ModelContext here so it lives on this actor's executor (not main thread)
         let modelContext = ModelContext(modelContainer)
-        let lastCompleted = try lastCompletedImportDate(in: modelContext)
-        let run = ImportRun(source: "igdb")
+        let run = ImportRun(source: "api")
         modelContext.insert(run)
         try modelContext.save()
 
         do {
-            let stats = try await fetchAndProcess(updatedSince: lastCompleted, in: modelContext)
+            let stats = try await fetchAndProcess(in: modelContext)
             run.completedAt = Date()
             run.status = "Completed"
             run.itemsInserted = stats.inserted
@@ -51,30 +48,15 @@ actor ImportActor {
 
     // MARK: - Private
 
-    private func lastCompletedImportDate(in modelContext: ModelContext) throws -> Date? {
-        var descriptor = FetchDescriptor<ImportRun>(
-            predicate: #Predicate { $0.status == "Completed" }
-        )
-        descriptor.sortBy = [SortDescriptor(\.completedAt, order: .reverse)]
-        descriptor.fetchLimit = 1
-        return try modelContext.fetch(descriptor).first?.completedAt
-    }
-
-    private func fetchAndProcess(updatedSince: Date?, in modelContext: ModelContext) async throws -> ImportStats {
-        let cutoff = Calendar.current.date(byAdding: .year, value: -1, to: Date())!
-
-        async let datedTask = igdbClient.fetchGames(from: cutoff, updatedSince: updatedSince)
-        async let tbaTask = igdbClient.fetchTbaGames(updatedSince: updatedSince)
+    private func fetchAndProcess(in modelContext: ModelContext) async throws -> ImportStats {
+        // Fetch dated + TBA games in parallel from backend API
+        async let datedTask = apiClient.fetchDatedGames()
+        async let tbaTask = apiClient.fetchTbaGames()
         let allGames = try await datedTask + tbaTask
 
         var stats = ImportStats()
 
         for game in allGames {
-            let (exclude, _) = safetyFilter.shouldExclude(game)
-            if exclude {
-                stats.filtered += 1
-                continue
-            }
             try processGame(game, stats: &stats, in: modelContext)
         }
 
@@ -85,10 +67,30 @@ actor ImportActor {
     private func processGame(_ game: NormalizedGame, stats: inout ImportStats, in modelContext: ModelContext) throws {
         let externalId = game.externalId
         var descriptor = FetchDescriptor<SourceRecord>(
-            predicate: #Predicate { $0.externalId == externalId && $0.source == "igdb" }
+            predicate: #Predicate { $0.externalId == externalId && $0.source == "api" }
         )
         descriptor.fetchLimit = 1
         let existing = try modelContext.fetch(descriptor).first
+
+        // Also check for old IGDB source records (migration from direct IGDB import)
+        if existing == nil {
+            var igdbDescriptor = FetchDescriptor<SourceRecord>(
+                predicate: #Predicate { $0.externalId == externalId && $0.source == "igdb" }
+            )
+            igdbDescriptor.fetchLimit = 1
+            if let igdbRecord = try modelContext.fetch(igdbDescriptor).first {
+                // Migrate: update source to "api" and update content
+                igdbRecord.source = "api"
+                igdbRecord.contentJson = game.contentJson
+                igdbRecord.contentHash = game.contentHash
+                igdbRecord.fetchedAt = Date()
+                if let gameRelease = igdbRecord.game {
+                    game.apply(to: gameRelease)
+                }
+                stats.updated += 1
+                return
+            }
+        }
 
         if let existing {
             guard existing.contentHash != game.contentHash else {
@@ -108,7 +110,7 @@ actor ImportActor {
 
             let record = SourceRecord(
                 externalId: externalId,
-                source: "igdb",
+                source: "api",
                 contentJson: game.contentJson,
                 contentHash: game.contentHash
             )

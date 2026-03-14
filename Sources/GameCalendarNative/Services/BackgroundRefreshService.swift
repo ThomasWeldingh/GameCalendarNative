@@ -8,7 +8,6 @@ final class BackgroundRefreshService: @unchecked Sendable {
     static let shared = BackgroundRefreshService()
 
     private var scheduler: NSBackgroundActivityScheduler?
-    private let tokenService = IgdbTokenService()
 
     private init() {}
 
@@ -30,9 +29,10 @@ final class BackgroundRefreshService: @unchecked Sendable {
     }
 
     private func runImport(container: ModelContainer) async {
-        guard let credentials = KeychainService.credentials else { return }
-        let client = IgdbClient(credentials: credentials, tokenService: tokenService)
-        let actor = ImportActor(modelContainer: container, igdbClient: client)
+        let urlString = UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://localhost:5262"
+        guard let baseURL = URL(string: urlString) else { return }
+        let client = ApiSyncClient(baseURL: baseURL)
+        let actor = ImportActor(modelContainer: container, apiClient: client)
         _ = try? await actor.run()
     }
 }

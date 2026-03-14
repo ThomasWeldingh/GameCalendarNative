@@ -69,8 +69,13 @@ class AppState {
     var lastImportStats: ImportStats? = nil
     var lastImportedAt: Date? = nil
 
-    private let tokenService = IgdbTokenService()
     private var isLoadingFilters = false
+
+    /// Base URL for the backend API (configurable via UserDefaults)
+    var apiBaseURL: URL {
+        let urlString = UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://localhost:5262"
+        return URL(string: urlString) ?? URL(string: "http://localhost:5262")!
+    }
 
     init() {
         loadFilters()
@@ -194,10 +199,9 @@ class AppState {
         return true
     }
 
-    // MARK: - Import
+    // MARK: - Import (syncs from backend API)
 
     func runImport(container: ModelContainer) async {
-        guard let credentials = KeychainService.credentials else { return }
         isImporting = true
         importError = nil
         defer {
@@ -205,8 +209,8 @@ class AppState {
             lastImportedAt = Date()
         }
 
-        let client = IgdbClient(credentials: credentials, tokenService: tokenService)
-        let actor = ImportActor(modelContainer: container, igdbClient: client)
+        let client = ApiSyncClient(baseURL: apiBaseURL)
+        let actor = ImportActor(modelContainer: container, apiClient: client)
         do {
             lastImportStats = try await actor.run()
         } catch {
