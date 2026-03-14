@@ -222,8 +222,10 @@ struct YouTubeView: View {
 
 private func makeYouTubeWebView() -> WKWebView {
     let config = WKWebViewConfiguration()
+    #if os(iOS)
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
+    #endif
     let webView = WKWebView(frame: .zero, configuration: config)
     webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
     return webView
