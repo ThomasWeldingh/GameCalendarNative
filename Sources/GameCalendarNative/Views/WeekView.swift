@@ -65,7 +65,7 @@ struct WeekDayColumn: View {
                 Text("\(Calendar.current.component(.day, from: date))")
                     .font(.title3)
                     .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? .accentColor : .primary)
+                    .foregroundStyle(isToday ? Color.accentColor : Color.primary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)

@@ -106,7 +106,7 @@ struct DayCell: View {
                 Text("\(Calendar.current.component(.day, from: date))")
                     .font(.caption)
                     .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? .white : isCurrentMonth ? .primary : .tertiary)
+                    .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
                     .frame(width: 22, height: 22)
                     .background(isToday ? Color.accentColor : .clear, in: Circle())
                 Spacer()
