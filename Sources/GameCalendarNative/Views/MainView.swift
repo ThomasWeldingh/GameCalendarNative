@@ -230,19 +230,23 @@ struct MainView: View {
 
     @ViewBuilder
     private var platformChips: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 6) {
             ForEach(["PC", "PlayStation", "Xbox", "Switch"], id: \.self) { platform in
-                Toggle(platform, isOn: Binding(
-                    get: { state.activePlatforms.contains(platform) },
-                    set: { on in
-                        if on { state.activePlatforms.insert(platform) }
-                        else { state.activePlatforms.remove(platform) }
-                    }
-                ))
-                .toggleStyle(.button)
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .tint(platformColor(platform))
+                let isActive = state.activePlatforms.contains(platform)
+                let color = platformColor(platform)
+                Button {
+                    if isActive { state.activePlatforms.remove(platform) }
+                    else { state.activePlatforms.insert(platform) }
+                } label: {
+                    Text(platform)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(isActive ? color : color.opacity(0.12), in: Capsule())
+                        .foregroundStyle(isActive ? .white : color)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

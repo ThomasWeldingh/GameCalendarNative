@@ -84,6 +84,7 @@ class AppState {
             return false
         }
         if game.popularity < minPopularity { return false }
+        if !showIndie && game.genres.contains("Indie") { return false }
         if !selectedGenres.isEmpty,
            !game.genres.contains(where: { selectedGenres.contains($0) }) {
             return false
