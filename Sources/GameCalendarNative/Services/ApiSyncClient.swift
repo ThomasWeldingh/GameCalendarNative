@@ -67,14 +67,17 @@ struct ApiCalendarItem: Decodable {
     let websiteUrl: String?
 }
 
+private let iso8601DateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd"
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(identifier: "UTC")
+    return formatter
+}()
+
 extension ApiCalendarItem {
     func toNormalized() -> NormalizedGame {
-        let releaseDate: Date? = date.flatMap { dateStr in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.timeZone = TimeZone(identifier: "UTC")
-            return formatter.date(from: dateStr)
-        }
+        let releaseDate: Date? = date.flatMap { iso8601DateFormatter.date(from: $0) }
 
         // Build a stable JSON representation for content hashing
         let contentJson = buildContentJson()
