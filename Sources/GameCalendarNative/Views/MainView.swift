@@ -37,6 +37,7 @@ struct MainView: View {
 
     // MARK: - iOS
 
+    #if os(iOS)
     private var iOSLayout: some View {
         TabView(selection: $state.viewType) {
             ForEach(ViewType.allCases, id: \.self) { type in
@@ -90,6 +91,7 @@ struct MainView: View {
         case .wishlist: WishlistView(state: state)
         }
     }
+    #endif
 
     // MARK: - Shared content
 
