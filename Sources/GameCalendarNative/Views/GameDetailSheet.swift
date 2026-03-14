@@ -1,9 +1,6 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
-#if canImport(WebKit)
-import WebKit
-#endif
 #if os(macOS)
 import AppKit
 #else
@@ -19,7 +16,6 @@ struct GameDetailSheet: View {
     @Query private var wishlistEntries: [WishlistEntry]
 
     @State private var lightboxIndex: Int? = nil
-    @State private var trailerVideoId: String? = nil
 
     private var isWishlisted: Bool {
         wishlistEntries.contains { $0.game.externalId == game.externalId }
@@ -102,10 +98,6 @@ struct GameDetailSheet: View {
                 )
             }
 
-            // Trailer player overlay
-            if let videoId = trailerVideoId {
-                trailerPlayerOverlay(videoId: videoId)
-            }
         }
     }
 
@@ -222,7 +214,13 @@ struct GameDetailSheet: View {
                 HStack(spacing: 8) {
                     ForEach(game.videoIds.prefix(4), id: \.self) { videoId in
                         Button {
-                            trailerVideoId = videoId
+                            if let url = URL(string: "https://www.youtube.com/watch?v=\(videoId)") {
+                                #if os(macOS)
+                                NSWorkspace.shared.open(url)
+                                #else
+                                UIApplication.shared.open(url)
+                                #endif
+                            }
                         } label: {
                             ZStack {
                                 AsyncImage(url: URL(string: "https://img.youtube.com/vi/\(videoId)/mqdefault.jpg")) { image in
@@ -326,68 +324,6 @@ struct GameDetailSheet: View {
         }
     }
 
-    // MARK: - Trailer player overlay
-
-    private func trailerPlayerOverlay(videoId: String) -> some View {
-        ZStack {
-            Color.black.opacity(0.93)
-                .ignoresSafeArea()
-                .onTapGesture { trailerVideoId = nil }
-
-            VStack {
-                HStack {
-                    // Fullscreen button (top-left)
-                    Button {
-                        #if os(macOS)
-                        NSApplication.shared.keyWindow?.toggleFullScreen(nil)
-                        #endif
-                    } label: {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(16)
-                    .help("Fullskjerm")
-
-                    Spacer()
-
-                    // Close button (top-right)
-                    Button {
-                        trailerVideoId = nil
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(16)
-                }
-
-                YouTubeView(videoId: videoId)
-                    .frame(maxWidth: 800, maxHeight: 450)
-                    .clipShape(.rect(cornerRadius: 10))
-                    .padding(40)
-
-                Spacer()
-            }
-        }
-        .onKeyPress(.escape) {
-            trailerVideoId = nil
-            return .handled
-        }
-        .onKeyPress("f") {
-            #if os(macOS)
-            NSApplication.shared.keyWindow?.toggleFullScreen(nil)
-            #endif
-            return .handled
-        }
-    }
-
     // MARK: - ICS export
 
     private func exportSingleIcs() {
@@ -415,64 +351,3 @@ struct GameDetailSheet: View {
     }
 }
 
-// MARK: - YouTube WebView
-
-struct YouTubeView: View {
-    let videoId: String
-
-    var body: some View {
-        YouTubeWebViewRepresentable(videoId: videoId)
-    }
-}
-
-private func makeYouTubeHTML(videoId: String) -> String {
-    """
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-    * { margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
-    iframe { width: 100%; height: 100%; border: none; }
-    </style>
-    </head>
-    <body>
-    <iframe
-        src="https://www.youtube.com/embed/\(videoId)?autoplay=1&rel=0&playsinline=1&enablejsapi=1"
-        allow="autoplay; encrypted-media; fullscreen"
-        allowfullscreen>
-    </iframe>
-    </body>
-    </html>
-    """
-}
-
-private func makeYouTubeWebView() -> WKWebView {
-    let config = WKWebViewConfiguration()
-    config.preferences.isElementFullscreenEnabled = true
-    #if os(iOS)
-    config.allowsInlineMediaPlayback = true
-    config.mediaTypesRequiringUserActionForPlayback = []
-    #endif
-    let webView = WKWebView(frame: .zero, configuration: config)
-    return webView
-}
-
-#if os(macOS)
-struct YouTubeWebViewRepresentable: NSViewRepresentable {
-    let videoId: String
-    func makeNSView(context: Context) -> WKWebView { makeYouTubeWebView() }
-    func updateNSView(_ view: WKWebView, context: Context) {
-        view.loadHTMLString(makeYouTubeHTML(videoId: videoId), baseURL: URL(string: "https://www.youtube.com"))
-    }
-}
-#else
-struct YouTubeWebViewRepresentable: UIViewRepresentable {
-    let videoId: String
-    func makeUIView(context: Context) -> WKWebView { makeYouTubeWebView() }
-    func updateUIView(_ view: WKWebView, context: Context) {
-        view.loadHTMLString(makeYouTubeHTML(videoId: videoId), baseURL: URL(string: "https://www.youtube.com"))
-    }
-}
-#endif
