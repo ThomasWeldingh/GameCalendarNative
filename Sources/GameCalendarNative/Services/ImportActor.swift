@@ -54,49 +54,44 @@ actor ImportActor {
         async let tbaTask = apiClient.fetchTbaGames()
         let allGames = try await datedTask + tbaTask
 
+        // Pre-load ALL existing SourceRecords into a dictionary for O(1) lookups
+        // This avoids ~28,500 individual DB queries (the previous bottleneck)
+        let allRecords = try modelContext.fetch(FetchDescriptor<SourceRecord>())
+        var recordsByExternalId: [String: SourceRecord] = [:]
+        for record in allRecords {
+            recordsByExternalId[record.externalId] = record
+        }
+
         var stats = ImportStats()
 
         for game in allGames {
-            try processGame(game, stats: &stats, in: modelContext)
+            processGame(game, stats: &stats, lookup: &recordsByExternalId, in: modelContext)
         }
 
         try modelContext.save()
         return stats
     }
 
-    private func processGame(_ game: NormalizedGame, stats: inout ImportStats, in modelContext: ModelContext) throws {
+    private func processGame(
+        _ game: NormalizedGame,
+        stats: inout ImportStats,
+        lookup: inout [String: SourceRecord],
+        in modelContext: ModelContext
+    ) {
         let externalId = game.externalId
-        var descriptor = FetchDescriptor<SourceRecord>(
-            predicate: #Predicate { $0.externalId == externalId && $0.source == "api" }
-        )
-        descriptor.fetchLimit = 1
-        let existing = try modelContext.fetch(descriptor).first
 
-        // Also check for old IGDB source records (migration from direct IGDB import)
-        if existing == nil {
-            var igdbDescriptor = FetchDescriptor<SourceRecord>(
-                predicate: #Predicate { $0.externalId == externalId && $0.source == "igdb" }
-            )
-            igdbDescriptor.fetchLimit = 1
-            if let igdbRecord = try modelContext.fetch(igdbDescriptor).first {
-                // Migrate: update source to "api" and update content
-                igdbRecord.source = "api"
-                igdbRecord.contentJson = game.contentJson
-                igdbRecord.contentHash = game.contentHash
-                igdbRecord.fetchedAt = Date()
-                if let gameRelease = igdbRecord.game {
-                    game.apply(to: gameRelease)
-                }
-                stats.updated += 1
-                return
+        if let existing = lookup[externalId] {
+            // Migrate old IGDB source to API
+            if existing.source == "igdb" {
+                existing.source = "api"
             }
-        }
 
-        if let existing {
+            // Skip if content hasn't changed
             guard existing.contentHash != game.contentHash else {
                 stats.skipped += 1
                 return
             }
+
             existing.contentJson = game.contentJson
             existing.contentHash = game.contentHash
             existing.fetchedAt = Date()
@@ -116,6 +111,7 @@ actor ImportActor {
             )
             record.game = gameRelease
             modelContext.insert(record)
+            lookup[externalId] = record
             stats.inserted += 1
         }
     }
