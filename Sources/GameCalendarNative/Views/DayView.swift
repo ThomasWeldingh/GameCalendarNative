@@ -134,7 +134,7 @@ struct DayGameCard: View {
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .overlay(Capsule().strokeBorder(.separator, lineWidth: 0.5))
+                                .overlay(Capsule().stroke(Color.secondary.opacity(0.3), lineWidth: 0.5))
                         }
                     }
                 }
@@ -151,10 +151,10 @@ struct DayGameCard: View {
             .padding(16)
         }
         .overlay(alignment: .trailing) {
-            Rectangle().fill(.separator.opacity(0.3)).frame(width: 0.5)
+            Rectangle().fill(Color.secondary.opacity(0.2)).frame(width: 0.5)
         }
         .overlay(alignment: .bottom) {
-            Rectangle().fill(.separator.opacity(0.3)).frame(height: 0.5)
+            Rectangle().fill(Color.secondary.opacity(0.2)).frame(height: 0.5)
         }
     }
 

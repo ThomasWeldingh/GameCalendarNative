@@ -82,8 +82,8 @@ struct TbaView: View {
                 .background(isActive ? Color.accentColor.opacity(0.1) : Color.clear, in: Capsule())
                 .foregroundStyle(isActive ? Color.accentColor : .secondary)
                 .overlay(
-                    Capsule().strokeBorder(
-                        isActive ? Color.accentColor.opacity(0.4) : .separator,
+                    Capsule().stroke(
+                        isActive ? Color.accentColor.opacity(0.4) : Color.secondary.opacity(0.3),
                         lineWidth: 0.5
                     )
                 )
@@ -154,7 +154,7 @@ struct TbaCard: View {
         .clipShape(.rect(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
+                .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
     }

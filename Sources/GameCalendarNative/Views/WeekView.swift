@@ -168,7 +168,7 @@ struct WeekCoverCard: View {
         .clipShape(.rect(cornerRadius: 6))
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
+                .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
         )
         .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
     }
