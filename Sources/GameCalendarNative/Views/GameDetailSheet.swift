@@ -211,15 +211,28 @@ struct GameDetailSheet: View {
 struct YouTubeView: View {
     let videoId: String
 
-    var body: some View {
-        WebViewRepresentable(url: URL(string: "https://www.youtube.com/embed/\(videoId)")!)
+    private var embedURL: URL {
+        URL(string: "https://www.youtube-nocookie.com/embed/\(videoId)?playsinline=1&rel=0")!
     }
+
+    var body: some View {
+        WebViewRepresentable(url: embedURL)
+    }
+}
+
+private func makeYouTubeWebView() -> WKWebView {
+    let config = WKWebViewConfiguration()
+    config.allowsInlineMediaPlayback = true
+    config.mediaTypesRequiringUserActionForPlayback = []
+    let webView = WKWebView(frame: .zero, configuration: config)
+    webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+    return webView
 }
 
 #if os(macOS)
 struct WebViewRepresentable: NSViewRepresentable {
     let url: URL
-    func makeNSView(context: Context) -> WKWebView { WKWebView() }
+    func makeNSView(context: Context) -> WKWebView { makeYouTubeWebView() }
     func updateNSView(_ view: WKWebView, context: Context) {
         view.load(URLRequest(url: url))
     }
@@ -227,7 +240,7 @@ struct WebViewRepresentable: NSViewRepresentable {
 #else
 struct WebViewRepresentable: UIViewRepresentable {
     let url: URL
-    func makeUIView(context: Context) -> WKWebView { WKWebView() }
+    func makeUIView(context: Context) -> WKWebView { makeYouTubeWebView() }
     func updateUIView(_ view: WKWebView, context: Context) {
         view.load(URLRequest(url: url))
     }
