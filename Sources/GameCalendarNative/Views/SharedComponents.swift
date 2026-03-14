@@ -252,10 +252,26 @@ struct ScreenshotLightbox: View {
             }
             .padding(.horizontal, 20)
 
-            // Close button (top-right)
+            // Top bar: fullscreen (left) + close (right)
             VStack {
                 HStack {
+                    // Fullscreen button (top-left)
+                    Button {
+                        toggleFullscreen()
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(16)
+                    .help("Fullskjerm")
+
                     Spacer()
+
+                    // Close button (top-right)
                     Button {
                         onClose()
                     } label: {
@@ -298,6 +314,16 @@ struct ScreenshotLightbox: View {
             if currentIndex < urls.count - 1 { withAnimation { currentIndex += 1 } }
             return .handled
         }
+        .onKeyPress("f") {
+            toggleFullscreen()
+            return .handled
+        }
+    }
+
+    private func toggleFullscreen() {
+        #if os(macOS)
+        NSApplication.shared.keyWindow?.toggleFullScreen(nil)
+        #endif
     }
 }
 

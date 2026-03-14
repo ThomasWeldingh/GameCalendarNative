@@ -63,6 +63,11 @@ struct MainView: View {
 
             Spacer()
 
+            // Platform chips (centered)
+            platformChips
+
+            Spacer()
+
             // Date navigation (month/week/day only)
             if state.showsDateNav {
                 HStack(spacing: 2) {
@@ -243,7 +248,6 @@ struct MainView: View {
     @ToolbarContentBuilder
     private var macOSToolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .automatic) {
-            platformChips
             importStatsLabel
         }
     }

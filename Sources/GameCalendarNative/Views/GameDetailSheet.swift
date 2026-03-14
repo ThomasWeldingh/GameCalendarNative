@@ -336,7 +336,25 @@ struct GameDetailSheet: View {
 
             VStack {
                 HStack {
+                    // Fullscreen button (top-left)
+                    Button {
+                        #if os(macOS)
+                        NSApplication.shared.keyWindow?.toggleFullScreen(nil)
+                        #endif
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(16)
+                    .help("Fullskjerm")
+
                     Spacer()
+
+                    // Close button (top-right)
                     Button {
                         trailerVideoId = nil
                     } label: {
@@ -360,6 +378,12 @@ struct GameDetailSheet: View {
         }
         .onKeyPress(.escape) {
             trailerVideoId = nil
+            return .handled
+        }
+        .onKeyPress("f") {
+            #if os(macOS)
+            NSApplication.shared.keyWindow?.toggleFullScreen(nil)
+            #endif
             return .handled
         }
     }
@@ -396,40 +420,59 @@ struct GameDetailSheet: View {
 struct YouTubeView: View {
     let videoId: String
 
-    private var embedURL: URL {
-        URL(string: "https://www.youtube-nocookie.com/embed/\(videoId)?playsinline=1&rel=0&autoplay=1")!
-    }
-
     var body: some View {
-        WebViewRepresentable(url: embedURL)
+        YouTubeWebViewRepresentable(videoId: videoId)
     }
+}
+
+private func makeYouTubeHTML(videoId: String) -> String {
+    """
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+    </style>
+    </head>
+    <body>
+    <iframe
+        src="https://www.youtube.com/embed/\(videoId)?autoplay=1&rel=0&playsinline=1&enablejsapi=1"
+        allow="autoplay; encrypted-media; fullscreen"
+        allowfullscreen>
+    </iframe>
+    </body>
+    </html>
+    """
 }
 
 private func makeYouTubeWebView() -> WKWebView {
     let config = WKWebViewConfiguration()
+    config.preferences.isElementFullscreenEnabled = true
     #if os(iOS)
     config.allowsInlineMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
     #endif
     let webView = WKWebView(frame: .zero, configuration: config)
-    webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
     return webView
 }
 
 #if os(macOS)
-struct WebViewRepresentable: NSViewRepresentable {
-    let url: URL
+struct YouTubeWebViewRepresentable: NSViewRepresentable {
+    let videoId: String
     func makeNSView(context: Context) -> WKWebView { makeYouTubeWebView() }
     func updateNSView(_ view: WKWebView, context: Context) {
-        view.load(URLRequest(url: url))
+        view.loadHTMLString(makeYouTubeHTML(videoId: videoId), baseURL: URL(string: "https://www.youtube.com"))
     }
 }
 #else
-struct WebViewRepresentable: UIViewRepresentable {
-    let url: URL
+struct YouTubeWebViewRepresentable: UIViewRepresentable {
+    let videoId: String
     func makeUIView(context: Context) -> WKWebView { makeYouTubeWebView() }
     func updateUIView(_ view: WKWebView, context: Context) {
-        view.load(URLRequest(url: url))
+        view.loadHTMLString(makeYouTubeHTML(videoId: videoId), baseURL: URL(string: "https://www.youtube.com"))
     }
 }
 #endif
