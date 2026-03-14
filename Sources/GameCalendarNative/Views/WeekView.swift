@@ -15,23 +15,25 @@ struct WeekView: View {
     }
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        GeometryReader { geo in
             HStack(alignment: .top, spacing: 1) {
                 ForEach(weekDays, id: \.self) { day in
+                    let dayGames = games.filter { game in
+                        guard let d = game.releaseDate else { return false }
+                        return calendar.isDate(d, inSameDayAs: day)
+                    }
                     WeekDayColumn(
                         date: day,
-                        games: games.filter { game in
-                            guard let d = game.releaseDate else { return false }
-                            return calendar.isDate(d, inSameDayAs: day)
-                        },
+                        games: dayGames,
+                        cardWidth: (geo.size.width - 8) / 7 - 16,
                         onSelect: { state.selectedGame = $0 }
                     )
                 }
             }
-            .frame(minWidth: 900)
         }
         .task(id: state.focusDate) { await loadGames() }
         .task(id: state.activePlatforms) { await loadGames() }
+        .task(id: state.minPopularity) { await loadGames() }
     }
 
     private func loadGames() async {
@@ -48,70 +50,98 @@ struct WeekView: View {
     }
 }
 
+// MARK: - Day column
+
 struct WeekDayColumn: View {
     let date: Date
     let games: [GameRelease]
+    let cardWidth: CGFloat
     let onSelect: (GameRelease) -> Void
 
     private var isToday: Bool { Calendar.current.isDateInToday(date) }
 
+    private let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "nb_NO")
+        f.dateFormat = "EEE"
+        return f
+    }()
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
             // Header
-            VStack(spacing: 2) {
-                Text(date.formatted(.dateTime.weekday(.abbreviated)))
-                    .font(.caption)
+            VStack(spacing: 4) {
+                Text(dayFormatter.string(from: date).uppercased())
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
+
                 Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.title3)
+                    .font(.title2)
                     .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? Color.accentColor : Color.primary)
+                    .foregroundStyle(isToday ? .white : .primary)
+                    .frame(width: 36, height: 36)
+                    .background(isToday ? Color.accentColor : Color.clear, in: Circle())
+
+                if !games.isEmpty {
+                    Text("\(games.count) spill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.quaternary, in: Capsule())
+                } else {
+                    Color.clear.frame(height: 18)
+                }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(.quaternary)
+            .padding(.vertical, 10)
+            .background(isToday ? Color.accentColor.opacity(0.06) : Color.clear)
 
             Divider()
 
-            // Games
+            // Game cover cards
             ScrollView {
-                VStack(spacing: 4) {
+                VStack(spacing: 8) {
                     ForEach(games, id: \.externalId) { game in
-                        WeekGameCard(game: game)
+                        WeekCoverCard(game: game, cardWidth: cardWidth)
                             .onTapGesture { onSelect(game) }
                     }
                 }
-                .padding(6)
+                .padding(8)
             }
         }
-        .frame(minWidth: 120, maxWidth: .infinity)
-        .background(isToday ? Color.accentColor.opacity(0.05) : Color(.windowBackgroundColor))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(isToday ? Color.accentColor.opacity(0.03) : Color.clear)
     }
 }
 
-struct WeekGameCard: View {
+// MARK: - Cover card
+
+struct WeekCoverCard: View {
     let game: GameRelease
+    let cardWidth: CGFloat
 
     var body: some View {
-        HStack(spacing: 6) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(game.title.pillColor)
-                .frame(width: 3)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(game.title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .lineLimit(2)
-                if !game.platforms.isEmpty {
-                    Text(game.platforms.joined(separator: ", "))
-                        .font(.system(size: 9))
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
+                image.resizable().aspectRatio(3/4, contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(game.title.pillColor.opacity(0.2))
+                    .overlay {
+                        Image(systemName: "gamecontroller")
+                            .foregroundStyle(game.title.pillColor.opacity(0.5))
+                    }
             }
+            .frame(width: max(cardWidth, 40), height: max(cardWidth * 4 / 3, 54))
+            .clipShape(.rect(cornerRadius: 8))
+            .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+
+            Text(game.title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary, in: .rect(cornerRadius: 6))
     }
 }
