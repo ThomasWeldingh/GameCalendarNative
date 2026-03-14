@@ -183,9 +183,21 @@ struct MainView: View {
         Button {
             showFilter.toggle()
         } label: {
-            Image(systemName: activeFilterCount > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                .symbolRenderingMode(.hierarchical)
+            HStack(spacing: 5) {
+                Image(systemName: "line.3.horizontal.decrease")
+                Text("Filter")
+                if activeFilterCount > 0 {
+                    Text("\(activeFilterCount)")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.accentColor, in: Capsule())
+                        .foregroundStyle(.white)
+                }
+            }
         }
+        .buttonStyle(.bordered)
         .help("Filtrering")
         #if os(macOS)
         .popover(isPresented: $showFilter, arrowEdge: .bottom) {

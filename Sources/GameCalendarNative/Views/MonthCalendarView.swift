@@ -142,14 +142,33 @@ struct GamePill: View {
     let game: GameRelease
 
     var body: some View {
-        Text(game.title)
-            .font(.system(size: 10))
-            .lineLimit(1)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(game.title.pillColor.opacity(0.25), in: .rect(cornerRadius: 3))
-            .foregroundStyle(game.title.pillColor)
+        HStack(spacing: 4) {
+            // Colored left accent bar
+            RoundedRectangle(cornerRadius: 1)
+                .fill(game.title.pillColor)
+                .frame(width: 3)
+
+            // Cover thumbnail
+            AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Image(systemName: "gamecontroller.fill")
+                    .font(.system(size: 7))
+                    .foregroundStyle(game.title.pillColor.opacity(0.6))
+            }
+            .frame(width: 14, height: 14)
+            .clipShape(.rect(cornerRadius: 2))
+
+            // Title
+            Text(game.title)
+                .font(.system(size: 10))
+                .lineLimit(1)
+                .foregroundStyle(.primary)
+        }
+        .padding(.trailing, 4)
+        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary, in: .rect(cornerRadius: 3))
     }
 }
 
