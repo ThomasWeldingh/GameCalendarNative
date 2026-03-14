@@ -126,7 +126,7 @@ struct WishlistCard: View {
             if let date = game.releaseDate {
                 Text(date.formatted(.dateTime.day().month(.abbreviated).year()).uppercased())
                     .font(.caption)
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             } else {
                 Text("TBA")
                     .font(.caption)
@@ -160,7 +160,7 @@ struct UpcomingWishlistCard: View {
             if let date = game.releaseDate {
                 Text(date.formatted(.dateTime.day().month(.abbreviated)).uppercased())
                     .font(.system(size: 10))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
         }
     }
