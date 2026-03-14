@@ -27,7 +27,7 @@ struct FilterView: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
-                        .tint(state.minPopularity == preset.value ? .accentColor : .secondary)
+                        .tint(state.minPopularity == preset.value ? Color.accentColor : Color.secondary)
                     }
                 }
             }
@@ -51,7 +51,7 @@ struct FilterView: View {
                             Button("Nullstill") { state.selectedGenres = [] }
                                 .font(.caption)
                                 .buttonStyle(.plain)
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
 
