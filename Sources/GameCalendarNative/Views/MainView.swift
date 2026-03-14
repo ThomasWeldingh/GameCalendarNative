@@ -6,6 +6,7 @@ struct MainView: View {
     @Bindable var state: AppState
 
     @State private var showFilter = false
+    @Query private var wishlistEntries: [WishlistEntry]
 
     var body: some View {
         #if os(iOS)
@@ -15,13 +16,17 @@ struct MainView: View {
         #endif
     }
 
-    // MARK: - macOS
+    // MARK: - macOS layout
 
     private var macOSLayout: some View {
         NavigationStack {
-            contentView
-                .navigationTitle("")
-                .toolbar { macOSToolbar }
+            VStack(spacing: 0) {
+                tabStrip
+                Divider()
+                contentView
+            }
+            .navigationTitle("")
+            .toolbar { macOSToolbar }
         }
         .searchable(text: $state.searchQuery, prompt: "Søk etter spill...")
         .frame(minWidth: 900, minHeight: 600)
@@ -35,7 +40,96 @@ struct MainView: View {
         }
     }
 
-    // MARK: - iOS
+    // MARK: - Tab strip (web-style second row)
+
+    private var tabStrip: some View {
+        HStack(spacing: 2) {
+            ForEach(ViewType.allCases, id: \.self) { type in
+                tabButton(for: type)
+            }
+
+            // Today button
+            Button("I dag") {
+                state.goToToday()
+            }
+            .buttonStyle(.plain)
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(.quaternary, in: .rect(cornerRadius: 7))
+            .padding(.leading, 4)
+
+            Spacer()
+
+            // Date navigation (month/week/day only)
+            if state.showsDateNav {
+                HStack(spacing: 2) {
+                    Button { state.navigateBack() } label: {
+                        Image(systemName: "chevron.left").font(.callout)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(6)
+
+                    Text(state.focusDateLabel)
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .frame(minWidth: 180)
+
+                    Button { state.navigateForward() } label: {
+                        Image(systemName: "chevron.right").font(.callout)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(6)
+                }
+                .padding(.trailing, 8)
+            }
+
+            // Filter button
+            filterButton
+
+            // Import
+            importButton
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.bar)
+    }
+
+    @ViewBuilder
+    private func tabButton(for type: ViewType) -> some View {
+        let isActive = state.viewType == type
+        Button {
+            state.viewType = type
+        } label: {
+            HStack(spacing: 5) {
+                if type == .wishlist {
+                    Image(systemName: "heart.fill")
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                    if wishlistEntries.count > 0 {
+                        Text("\(wishlistEntries.count)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(.red, in: Capsule())
+                            .foregroundStyle(.white)
+                    }
+                } else {
+                    Text(type.label)
+                        .font(.callout)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(isActive ? Color.accentColor.opacity(0.12) : Color.clear, in: .rect(cornerRadius: 7))
+            .foregroundStyle(isActive ? Color.accentColor : Color.primary)
+            .fontWeight(isActive ? .semibold : .regular)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - iOS layout
 
     #if os(iOS)
     private var iOSLayout: some View {
@@ -45,7 +139,7 @@ struct MainView: View {
                     iOSContent(for: type)
                         .navigationTitle(type.label)
                         .toolbar {
-                            if type == .month || type == .week {
+                            if type == .month || type == .week || type == .day {
                                 ToolbarItemGroup(placement: .navigationBarLeading) {
                                     dateNavButtons
                                 }
@@ -56,7 +150,13 @@ struct MainView: View {
                             }
                         }
                 }
-                .tabItem { Label(type.label, systemImage: type.icon) }
+                .tabItem {
+                    if type == .wishlist {
+                        Label("\(type.label) \(wishlistEntries.count)", systemImage: type.icon)
+                    } else {
+                        Label(type.label, systemImage: type.icon)
+                    }
+                }
                 .tag(type)
             }
         }
@@ -87,8 +187,10 @@ struct MainView: View {
         switch type {
         case .month:    MonthCalendarView(state: state)
         case .week:     WeekView(state: state)
+        case .day:      DayView(state: state)
         case .tba:      TbaView(state: state)
         case .wishlist: WishlistView(state: state)
+        case .new:      NewGamesView(state: state)
         }
     }
     #endif
@@ -100,8 +202,10 @@ struct MainView: View {
         switch state.viewType {
         case .month:    MonthCalendarView(state: state)
         case .week:     WeekView(state: state)
+        case .day:      DayView(state: state)
         case .tba:      TbaView(state: state)
         case .wishlist: WishlistView(state: state)
+        case .new:      NewGamesView(state: state)
         }
     }
 
@@ -125,40 +229,13 @@ struct MainView: View {
 
     @ToolbarContentBuilder
     private var macOSToolbar: some ToolbarContent {
-        ToolbarItemGroup(placement: .navigation) {
-            Picker("Visning", selection: $state.viewType) {
-                ForEach(ViewType.allCases, id: \.self) { type in
-                    Label(type.label, systemImage: type.icon).tag(type)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 320)
-        }
-
-        if state.viewType == .month || state.viewType == .week {
-            ToolbarItemGroup(placement: .principal) {
-                dateNavButtons
-            }
-        }
-
         ToolbarItemGroup(placement: .automatic) {
             platformChips
-        }
-
-        ToolbarItemGroup(placement: .automatic) {
-            filterButton
-
-            if let stats = state.lastImportStats {
-                Text("+\(stats.inserted)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            importButton
+            importStatsLabel
         }
     }
 
-    // MARK: - Reusable toolbar pieces
+    // MARK: - Reusable pieces
 
     private var dateNavButtons: some View {
         HStack(spacing: 0) {
@@ -166,12 +243,10 @@ struct MainView: View {
                 Image(systemName: "chevron.left")
             }
             .buttonStyle(.plain)
-
             Button(state.focusDateLabel, action: state.goToToday)
                 .buttonStyle(.plain)
                 .font(.headline)
                 .frame(minWidth: 160)
-
             Button(action: state.navigateForward) {
                 Image(systemName: "chevron.right")
             }
@@ -213,11 +288,24 @@ struct MainView: View {
             if state.isImporting {
                 ProgressView().controlSize(.small)
             } else {
-                Image(systemName: "arrow.clockwise")
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.clockwise")
+                    Text("Importer")
+                }
             }
         }
-        .help("Importer spill fra IGDB")
+        .buttonStyle(.borderedProminent)
         .disabled(state.isImporting)
+        .help("Importer spill fra IGDB")
+    }
+
+    @ViewBuilder
+    private var importStatsLabel: some View {
+        if let stats = state.lastImportStats {
+            Text("+\(stats.inserted) nye")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var activeFilterCount: Int {

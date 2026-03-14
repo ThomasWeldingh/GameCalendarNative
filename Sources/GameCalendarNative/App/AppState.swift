@@ -3,14 +3,23 @@ import SwiftUI
 import SwiftData
 
 enum ViewType: String, CaseIterable {
-    case month, week, tba, wishlist
+    case month, week, day, tba, wishlist, new
 
     var label: String {
         switch self {
         case .month:    return "Måned"
         case .week:     return "Uke"
+        case .day:      return "Dag"
         case .tba:      return "TBA"
         case .wishlist: return "Ønskeliste"
+        case .new:      return "Nytt"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .wishlist: return "Ønskeliste"
+        default: return label
         }
     }
 
@@ -18,8 +27,10 @@ enum ViewType: String, CaseIterable {
         switch self {
         case .month:    return "calendar"
         case .week:     return "calendar.day.timeline.left"
+        case .day:      return "calendar.badge.clock"
         case .tba:      return "questionmark.circle"
-        case .wishlist: return "heart"
+        case .wishlist: return "heart.fill"
+        case .new:      return "sparkles"
         }
     }
 }
@@ -57,23 +68,46 @@ class AppState {
         case .week:
             let end = Calendar.current.date(byAdding: .day, value: 6, to: focusDate)!
             return "\(focusDate.formatted(.dateTime.day().month(.abbreviated))) – \(end.formatted(.dateTime.day().month(.abbreviated).year()))"
+        case .day:
+            return focusDate.formatted(.dateTime.weekday(.wide).day().month(.wide).year())
         default:
             return ""
         }
     }
 
+    var showsDateNav: Bool {
+        viewType == .month || viewType == .week || viewType == .day
+    }
+
     func navigateBack() {
-        let unit: Calendar.Component = viewType == .week ? .weekOfYear : .month
+        let unit: Calendar.Component
+        switch viewType {
+        case .week: unit = .weekOfYear
+        case .day:  unit = .day
+        default:    unit = .month
+        }
         focusDate = Calendar.current.date(byAdding: unit, value: -1, to: focusDate) ?? focusDate
     }
 
     func navigateForward() {
-        let unit: Calendar.Component = viewType == .week ? .weekOfYear : .month
+        let unit: Calendar.Component
+        switch viewType {
+        case .week: unit = .weekOfYear
+        case .day:  unit = .day
+        default:    unit = .month
+        }
         focusDate = Calendar.current.date(byAdding: unit, value: 1, to: focusDate) ?? focusDate
     }
 
     func goToToday() {
-        focusDate = Calendar.current.startOfMonth(for: .now)
+        switch viewType {
+        case .day:
+            focusDate = Calendar.current.startOfDay(for: .now)
+        case .week:
+            focusDate = Calendar.current.startOfWeek(for: .now)
+        default:
+            focusDate = Calendar.current.startOfMonth(for: .now)
+        }
     }
 
     // MARK: - Filtering
