@@ -44,9 +44,7 @@ struct MonthCalendarView: View {
             }
         }
         .task(id: state.focusDate) { await loadGames() }
-        .task(id: state.activePlatforms) { await loadGames() }
-        .task(id: state.minPopularity) { await loadGames() }
-        .task(id: state.selectedGenres) { await loadGames() }
+        .task(id: state.filterSnapshot) { await loadGames() }
     }
 
     // MARK: - Grid calculation
@@ -70,17 +68,23 @@ struct MonthCalendarView: View {
     private func loadGames() async {
         let start = calendar.startOfMonth(for: state.focusDate)
         let end = calendar.date(byAdding: .month, value: 1, to: start)!
+        let minPop = state.minPopularity
+        let nilDate = Date.distantPast
 
+        let predicate = #Predicate<GameRelease> { game in
+            (game.releaseDate ?? nilDate) >= start
+            && (game.releaseDate ?? nilDate) < end
+            && game.popularity >= minPop
+        }
         let descriptor = FetchDescriptor<GameRelease>(
+            predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
-        let all = (try? modelContext.fetch(descriptor)) ?? []
+        let fetched = (try? modelContext.fetch(descriptor)) ?? []
 
         var grouped: [Int: [GameRelease]] = [:]
-        for game in all {
-            guard let date = game.releaseDate,
-                  date >= start, date < end,
-                  state.matches(game) else { continue }
+        for game in fetched {
+            guard let date = game.releaseDate, state.matches(game) else { continue }
             let day = calendar.component(.day, from: date)
             grouped[day, default: []].append(game)
         }
@@ -159,9 +163,10 @@ struct GamePill: View {
             .frame(width: 14, height: 14)
             .clipShape(.rect(cornerRadius: 2))
 
-            // Title
+            // Title (uppercase to match web)
             Text(game.title)
                 .font(.system(size: 10))
+                .textCase(.uppercase)
                 .lineLimit(1)
                 .foregroundStyle(.primary)
         }

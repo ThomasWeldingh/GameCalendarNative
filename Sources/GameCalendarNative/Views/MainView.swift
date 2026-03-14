@@ -24,6 +24,8 @@ struct MainView: View {
                 tabStrip
                 Divider()
                 contentView
+                Divider()
+                footerBar
             }
             .navigationTitle("")
             .toolbar { macOSToolbar }
@@ -195,17 +197,28 @@ struct MainView: View {
     }
     #endif
 
-    // MARK: - Shared content
+    // MARK: - Shared content (ZStack keeps views alive for instant tab switching)
 
-    @ViewBuilder
     private var contentView: some View {
-        switch state.viewType {
-        case .month:    MonthCalendarView(state: state)
-        case .week:     WeekView(state: state)
-        case .day:      DayView(state: state)
-        case .tba:      TbaView(state: state)
-        case .wishlist: WishlistView(state: state)
-        case .new:      NewGamesView(state: state)
+        ZStack {
+            MonthCalendarView(state: state)
+                .opacity(state.viewType == .month ? 1 : 0)
+                .allowsHitTesting(state.viewType == .month)
+            WeekView(state: state)
+                .opacity(state.viewType == .week ? 1 : 0)
+                .allowsHitTesting(state.viewType == .week)
+            DayView(state: state)
+                .opacity(state.viewType == .day ? 1 : 0)
+                .allowsHitTesting(state.viewType == .day)
+            TbaView(state: state)
+                .opacity(state.viewType == .tba ? 1 : 0)
+                .allowsHitTesting(state.viewType == .tba)
+            WishlistView(state: state)
+                .opacity(state.viewType == .wishlist ? 1 : 0)
+                .allowsHitTesting(state.viewType == .wishlist)
+            NewGamesView(state: state)
+                .opacity(state.viewType == .new ? 1 : 0)
+                .allowsHitTesting(state.viewType == .new)
         }
     }
 
@@ -312,6 +325,7 @@ struct MainView: View {
         var count = 0
         if state.minPopularity > 0 { count += 1 }
         if !state.selectedGenres.isEmpty { count += 1 }
+        if !state.selectedPublishers.isEmpty { count += 1 }
         if !state.showIndie { count += 1 }
         return count
     }
@@ -347,5 +361,58 @@ struct MainView: View {
         case "Switch":      return .red
         default:            return .gray
         }
+    }
+
+    // MARK: - Footer bar (matches web's app-footer)
+
+    private var footerBar: some View {
+        HStack(spacing: 12) {
+            Text("Spillkalender")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let importedAt = state.lastImportedAt {
+                HStack(spacing: 4) {
+                    Text("Sist oppdatert:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(importedAt, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("siden")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let stats = state.lastImportStats, stats.inserted > 0 {
+                Button {
+                    state.viewType = .new
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("+\(stats.inserted) nye spill")
+                            .font(.caption)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+
+            if state.isImporting {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(.green)
+                        .frame(width: 6, height: 6)
+                    Text("Importerer...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.bar)
     }
 }

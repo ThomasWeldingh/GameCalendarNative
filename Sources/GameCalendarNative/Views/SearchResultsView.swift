@@ -29,18 +29,21 @@ struct SearchResultsView: View {
     private func search() async {
         guard query.count >= 2 else { results = []; return }
         isSearching = true
-        let lower = query.lowercased()
-        let all = (try? modelContext.fetch(FetchDescriptor<GameRelease>())) ?? []
-        results = all
-            .filter { game in
-                game.title.lowercased().contains(lower)
-                || game.developer?.lowercased().contains(lower) == true
-                || game.publisher?.lowercased().contains(lower) == true
-                || game.genres.contains { $0.lowercased().contains(lower) }
-            }
-            .sorted { $0.popularity > $1.popularity }
-            .prefix(60)
-            .map { $0 }
+
+        // Debounce to avoid searching on every keystroke
+        try? await Task.sleep(for: .milliseconds(200))
+        guard !Task.isCancelled else { return }
+
+        let queryStr = query
+        let predicate = #Predicate<GameRelease> { game in
+            game.title.localizedStandardContains(queryStr)
+        }
+        var descriptor = FetchDescriptor<GameRelease>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.popularity, order: .reverse)]
+        )
+        descriptor.fetchLimit = 60
+        results = (try? modelContext.fetch(descriptor)) ?? []
         isSearching = false
     }
 }
@@ -50,36 +53,52 @@ struct SearchResultRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Larger cover image (matches web proportions)
             AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
                 image.resizable().aspectRatio(3/4, contentMode: .fill)
             } placeholder: {
-                Rectangle().fill(game.title.pillColor.opacity(0.2))
+                Rectangle()
+                    .fill(game.title.pillColor.opacity(0.2))
+                    .overlay {
+                        Text(game.title.prefix(2).uppercased())
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(game.title.pillColor.opacity(0.6))
+                    }
             }
-            .frame(width: 36, height: 48)
-            .clipShape(.rect(cornerRadius: 4))
+            .frame(width: 48, height: 64)
+            .clipShape(.rect(cornerRadius: 6))
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(game.title)
                     .fontWeight(.medium)
                     .lineLimit(1)
 
-                HStack(spacing: 8) {
-                    if let date = game.releaseDate {
-                        Text(date.formatted(date: .abbreviated, time: .omitted))
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
-                    } else {
-                        Text("TBA").foregroundStyle(.secondary).font(.caption)
-                    }
-                    if !game.platforms.isEmpty {
-                        Text(game.platforms.joined(separator: " · "))
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
+                if let date = game.releaseDate {
+                    Text(date.formatted(date: .abbreviated, time: .omitted))
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                } else {
+                    Text("TBA").foregroundStyle(.secondary).font(.caption)
+                }
+
+                // Platform badges (matches web's styled chips)
+                if !game.platforms.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(game.platforms, id: \.self) { platform in
+                            Text(platform)
+                                .font(.system(size: 9))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(.quaternary, in: Capsule())
+                        }
                     }
                 }
             }
 
             Spacer()
+
+            // Heart button
+            HeartOverlayButton(game: game)
 
             if game.popularity > 0 {
                 HStack(spacing: 2) {
@@ -89,6 +108,6 @@ struct SearchResultRow: View {
                 .foregroundStyle(.orange)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }

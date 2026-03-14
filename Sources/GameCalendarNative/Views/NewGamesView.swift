@@ -6,12 +6,34 @@ struct NewGamesView: View {
     let state: AppState
 
     @State private var games: [GameRelease] = []
+    @State private var isLoading = true
 
-    private let columns = [GridItem(.adaptive(minimum: 140, maximum: 180), spacing: 12)]
+    private let columns = [GridItem(.adaptive(minimum: 130, maximum: 200), spacing: 12)]
 
     var body: some View {
         Group {
-            if games.isEmpty {
+            if isLoading {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nye spill lagt til")
+                                .font(.headline)
+                            Text("Fra siste import")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 16)
+
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(0..<8, id: \.self) { _ in
+                                SkeletonCard()
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                    .padding(.vertical, 16)
+                }
+            } else if games.isEmpty {
                 ContentUnavailableView(
                     "Ingen nye spill",
                     systemImage: "sparkles",
@@ -20,10 +42,15 @@ struct NewGamesView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("\(games.count) nye spill fra siste import")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16)
+                        // Header (matches web)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nye spill lagt til")
+                                .font(.headline)
+                            Text("Fra siste import")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 16)
 
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(games, id: \.externalId) { game in
@@ -41,19 +68,30 @@ struct NewGamesView: View {
     }
 
     private func loadGames() async {
-        // Find the most recent createdAt date
-        let allDescriptor = FetchDescriptor<GameRelease>(
+        // First, fetch just 1 game to find the most recent import date
+        var recentDescriptor = FetchDescriptor<GameRelease>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
-        let all = (try? modelContext.fetch(allDescriptor)) ?? []
-        guard let newest = all.first?.createdAt else { return }
-
-        // Show games created in the same calendar day as the newest
-        let cal = Calendar.current
-        let newestDay = cal.startOfDay(for: newest)
-        games = all.filter { game in
-            cal.startOfDay(for: game.createdAt) == newestDay
+        recentDescriptor.fetchLimit = 1
+        guard let newest = (try? modelContext.fetch(recentDescriptor))?.first else {
+            isLoading = false
+            return
         }
+
+        // Then fetch only games from that day
+        let cal = Calendar.current
+        let newestDay = cal.startOfDay(for: newest.createdAt)
+        let nextDay = cal.date(byAdding: .day, value: 1, to: newestDay)!
+
+        let predicate = #Predicate<GameRelease> { game in
+            game.createdAt >= newestDay && game.createdAt < nextDay
+        }
+        let descriptor = FetchDescriptor<GameRelease>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        games = (try? modelContext.fetch(descriptor)) ?? []
+        isLoading = false
     }
 }
 
@@ -62,28 +100,9 @@ struct NewGameCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
-                    image.resizable().aspectRatio(3/4, contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(game.title.pillColor.opacity(0.2))
-                        .overlay {
-                            Image(systemName: "gamecontroller")
-                                .foregroundStyle(game.title.pillColor.opacity(0.5))
-                        }
-                }
-                .frame(height: 120)
-                .clipped()
-
-                Text("NY")
-                    .font(.system(size: 9, weight: .bold))
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.accentColor, in: Capsule())
-                    .foregroundStyle(.white)
-                    .padding(6)
-            }
+            // Cover with heart + rating overlays (no "NY" badge - implied by the view)
+            GameCoverImage(game: game, height: 120)
+                .clipShape(.rect(cornerRadius: 10, style: .continuous))
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(game.title)
@@ -93,6 +112,10 @@ struct NewGameCard: View {
 
                 if let date = game.releaseDate {
                     Text(date.formatted(date: .abbreviated, time: .omitted))
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.accentColor)
+                } else if let window = game.releaseWindow {
+                    Text(window)
                         .font(.system(size: 10))
                         .foregroundStyle(Color.accentColor)
                 } else {

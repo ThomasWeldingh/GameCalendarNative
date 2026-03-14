@@ -46,18 +46,67 @@ class AppState {
     // Search
     var searchQuery: String = ""
 
-    // Filters
-    var activePlatforms: Set<String> = ["PC", "PlayStation", "Xbox", "Switch"]
-    var selectedGenres: Set<String> = []
-    var minPopularity: Int = 0
-    var showIndie: Bool = true
+    // Filters (persisted to UserDefaults)
+    var activePlatforms: Set<String> = [] {
+        didSet { if !isLoadingFilters { saveFilters() } }
+    }
+    var selectedGenres: Set<String> = [] {
+        didSet { if !isLoadingFilters { saveFilters() } }
+    }
+    var selectedPublishers: Set<String> = [] {
+        didSet { if !isLoadingFilters { saveFilters() } }
+    }
+    var minPopularity: Int = 0 {
+        didSet { if !isLoadingFilters { saveFilters() } }
+    }
+    var showIndie: Bool = true {
+        didSet { if !isLoadingFilters { saveFilters() } }
+    }
 
     // Import
     var isImporting: Bool = false
     var importError: String? = nil
     var lastImportStats: ImportStats? = nil
+    var lastImportedAt: Date? = nil
 
     private let tokenService = IgdbTokenService()
+    private var isLoadingFilters = false
+
+    init() {
+        loadFilters()
+    }
+
+    // MARK: - Filter persistence
+
+    private func saveFilters() {
+        let defaults = UserDefaults.standard
+        defaults.set(Array(activePlatforms), forKey: "activePlatforms")
+        defaults.set(Array(selectedGenres), forKey: "selectedGenres")
+        defaults.set(Array(selectedPublishers), forKey: "selectedPublishers")
+        defaults.set(minPopularity, forKey: "minPopularity")
+        defaults.set(showIndie, forKey: "showIndie")
+    }
+
+    private func loadFilters() {
+        isLoadingFilters = true
+        defer { isLoadingFilters = false }
+        let defaults = UserDefaults.standard
+        if let platforms = defaults.stringArray(forKey: "activePlatforms") {
+            activePlatforms = Set(platforms)
+        }
+        if let genres = defaults.stringArray(forKey: "selectedGenres") {
+            selectedGenres = Set(genres)
+        }
+        if let publishers = defaults.stringArray(forKey: "selectedPublishers") {
+            selectedPublishers = Set(publishers)
+        }
+        if defaults.object(forKey: "minPopularity") != nil {
+            minPopularity = defaults.integer(forKey: "minPopularity")
+        }
+        if defaults.object(forKey: "showIndie") != nil {
+            showIndie = defaults.bool(forKey: "showIndie")
+        }
+    }
 
     // MARK: - Navigation
 
@@ -110,6 +159,18 @@ class AppState {
         }
     }
 
+    // MARK: - Filter snapshot (for consolidated .task(id:) triggers)
+
+    var filterSnapshot: FilterSnapshot {
+        FilterSnapshot(
+            platforms: activePlatforms,
+            genres: selectedGenres,
+            publishers: selectedPublishers,
+            minPopularity: minPopularity,
+            showIndie: showIndie
+        )
+    }
+
     // MARK: - Filtering
 
     func matches(_ game: GameRelease) -> Bool {
@@ -123,6 +184,13 @@ class AppState {
            !game.genres.contains(where: { selectedGenres.contains($0) }) {
             return false
         }
+        if !selectedPublishers.isEmpty,
+           let pub = game.publisher, !selectedPublishers.contains(pub) {
+            return false
+        }
+        if !selectedPublishers.isEmpty && game.publisher == nil {
+            return false
+        }
         return true
     }
 
@@ -132,7 +200,10 @@ class AppState {
         guard let credentials = KeychainService.credentials else { return }
         isImporting = true
         importError = nil
-        defer { isImporting = false }
+        defer {
+            isImporting = false
+            lastImportedAt = Date()
+        }
 
         let client = IgdbClient(credentials: credentials, tokenService: tokenService)
         let actor = ImportActor(modelContainer: container, igdbClient: client)
@@ -142,6 +213,16 @@ class AppState {
             importError = error.localizedDescription
         }
     }
+}
+
+// MARK: - Filter snapshot
+
+struct FilterSnapshot: Equatable {
+    let platforms: Set<String>
+    let genres: Set<String>
+    let publishers: Set<String>
+    let minPopularity: Int
+    let showIndie: Bool
 }
 
 // MARK: - Calendar helpers
