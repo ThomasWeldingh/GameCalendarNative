@@ -30,7 +30,7 @@ struct MonthCalendarView: View {
 
             // Calendar grid — fills available height
             GeometryReader { geo in
-                let rowHeight = max(80, (geo.size.height - 5) / 6)
+                let rowHeight = max(80, (geo.size.height - 11) / 6)
                 LazyVGrid(columns: columns, spacing: 1) {
                     ForEach(gridDays, id: \.self) { date in
                         DayCell(
