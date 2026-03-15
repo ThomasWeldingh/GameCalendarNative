@@ -59,19 +59,24 @@ struct DayView: View {
         let dayStart = calendar.startOfDay(for: state.focusDate)
         let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
         let minPop = state.minPopularity
-        let nilDate = Date.distantPast
 
         let predicate = #Predicate<GameRelease> { game in
-            (game.releaseDate ?? nilDate) >= dayStart
-            && (game.releaseDate ?? nilDate) < dayEnd
+            game.releaseDate != nil
+            && game.releaseDate! >= dayStart
+            && game.releaseDate! < dayEnd
             && game.popularity >= minPop
         }
         let descriptor = FetchDescriptor<GameRelease>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
-        games = fetched.filter { state.matches($0) }
+
+        do {
+            let fetched = try modelContext.fetch(descriptor)
+            games = fetched.filter { state.matches($0) }
+        } catch {
+            print("[DayView] Fetch failed: \(error)")
+        }
     }
 }
 

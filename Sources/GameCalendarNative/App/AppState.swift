@@ -63,6 +63,9 @@ class AppState {
         didSet { if !isLoadingFilters { saveFilters() } }
     }
 
+    /// Incremented after each import to trigger view reloads
+    var dataGeneration: Int = 0
+
     // Import
     var isImporting: Bool = false
     var importError: String? = nil
@@ -172,7 +175,8 @@ class AppState {
             genres: selectedGenres,
             publishers: selectedPublishers,
             minPopularity: minPopularity,
-            showIndie: showIndie
+            showIndie: showIndie,
+            dataGeneration: dataGeneration
         )
     }
 
@@ -213,6 +217,7 @@ class AppState {
         let actor = ImportActor(modelContainer: container, apiClient: client)
         do {
             lastImportStats = try await actor.run()
+            dataGeneration += 1
         } catch {
             importError = error.localizedDescription
         }
@@ -227,6 +232,7 @@ struct FilterSnapshot: Equatable {
     let publishers: Set<String>
     let minPopularity: Int
     let showIndie: Bool
+    let dataGeneration: Int
 }
 
 // MARK: - Calendar helpers

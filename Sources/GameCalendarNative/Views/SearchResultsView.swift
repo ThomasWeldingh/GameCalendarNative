@@ -43,7 +43,11 @@ struct SearchResultsView: View {
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
         descriptor.fetchLimit = 60
-        results = (try? modelContext.fetch(descriptor)) ?? []
+        do {
+            results = try modelContext.fetch(descriptor)
+        } catch {
+            print("[SearchResultsView] Fetch failed: \(error)")
+        }
         isSearching = false
     }
 }
