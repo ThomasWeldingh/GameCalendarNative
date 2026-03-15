@@ -130,12 +130,9 @@ struct DayCell: View {
         case .compact:  return 2
         case .normal:   return 3
         case .expanded:
-            // 2-column grid: how many rows fit below the header?
-            // Header ~34pt, each card row ~(coverHeight + titleHeight + spacing)
-            let availableHeight = cellHeight - 38 // header + padding
-            let cardHeight = availableHeight * 0.42 // rough height per card row
-            let rows = max(1, Int(availableHeight / max(cardHeight, 50)))
-            return min(rows * 2, 8)
+            if cellHeight < 220 { return 2 }      // 1 row of 2
+            if cellHeight < 320 { return 4 }      // 2 rows of 2
+            return 6                               // 3 rows of 2
         }
     }
 
