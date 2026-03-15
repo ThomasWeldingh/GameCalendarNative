@@ -133,6 +133,16 @@ struct DayCell: View {
 
     private var overflowCount: Int { totalGameCount - games.count }
 
+    // Space budget for card mode:
+    // header = 34pt, title = 16pt, overflow = 18pt, padding = 8pt
+    private var cardCoverHeight: CGFloat {
+        let header: CGFloat = 34
+        let titleRow: CGFloat = 16
+        let overflow: CGFloat = overflowCount > 0 ? 18 : 0
+        let padding: CGFloat = 8
+        return max(30, cellHeight - header - titleRow - overflow - padding)
+    }
+
     private let miniCardColumns = [
         GridItem(.flexible(), spacing: 4),
         GridItem(.flexible(), spacing: 4)
@@ -203,7 +213,7 @@ struct DayCell: View {
     private var miniCardGrid: some View {
         LazyVGrid(columns: miniCardColumns, alignment: .leading, spacing: 4) {
             ForEach(games, id: \.externalId) { game in
-                MiniGameCard(game: game)
+                MiniGameCard(game: game, coverHeight: cardCoverHeight)
                     .onTapGesture { onSelect(game) }
             }
         }
@@ -215,12 +225,13 @@ struct DayCell: View {
 
 struct MiniGameCard: View {
     let game: GameRelease
+    let coverHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            // Cover image — guaranteed 1:1 square
+            // Cover image — constrained to available height
             Color.clear
-                .aspectRatio(1, contentMode: .fit)
+                .frame(height: coverHeight)
                 .overlay {
                     AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
                         image.resizable().scaledToFill()
