@@ -140,26 +140,45 @@ struct DayCell: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
-            // Day number
-            dayHeader
+        ZStack(alignment: .topLeading) {
+            // Content layer
+            VStack(alignment: .leading, spacing: showCards ? 0 : (isCompact ? 1 : 2)) {
+                if !showCards {
+                    // Pill mode: day header above pills
+                    dayHeader
+                }
 
-            // Game entries — pills or 2-column mini cards
+                // Game entries — pills or 2-column mini cards
+                if showCards {
+                    miniCardGrid
+                        .padding(.top, 4)
+                } else {
+                    pillList
+                }
+
+                // Overflow indicator
+                if games.count > maxVisible {
+                    Text("+\(games.count - maxVisible) til")
+                        .font(.system(size: isCompact ? 10 : 11))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            // Day number overlay (card mode: floating badge over cards)
             if showCards {
-                miniCardGrid
-            } else {
-                pillList
+                Text("\(Calendar.current.component(.day, from: date))")
+                    .font(.system(size: 13, weight: isToday ? .bold : .semibold))
+                    .foregroundStyle(isToday ? .white : isCurrentMonth ? .white : .white.opacity(0.4))
+                    .frame(width: 26, height: 26)
+                    .background(
+                        isToday ? Color.accentColor : Color.black.opacity(0.55),
+                        in: Circle()
+                    )
+                    .padding(4)
             }
-
-            // Overflow indicator
-            if games.count > maxVisible {
-                Text("+\(games.count - maxVisible) til")
-                    .font(.system(size: isCompact ? 10 : 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-            }
-
-            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: cellHeight)
@@ -168,7 +187,7 @@ struct DayCell: View {
         .opacity(isCurrentMonth ? 1 : 0.5)
     }
 
-    // MARK: - Day header
+    // MARK: - Day header (pill mode)
 
     private var dayHeader: some View {
         HStack {
