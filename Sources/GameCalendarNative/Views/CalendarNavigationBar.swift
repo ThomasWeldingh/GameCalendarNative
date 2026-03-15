@@ -5,15 +5,8 @@ struct CalendarNavigationBar: View {
     @FocusState private var searchFieldFocused: Bool
 
     var body: some View {
-        HStack(spacing: 2) {
-            // Calendar mode buttons: Måned | Uke | Dag
-            ForEach(ViewType.calendarModes, id: \.self) { mode in
-                calendarModeButton(for: mode)
-            }
-
-            Spacer()
-
-            // Search field (always visible, Spotlight-style)
+        ZStack {
+            // Center: Search field (always centered in bar)
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 12))
@@ -38,42 +31,51 @@ struct CalendarNavigationBar: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(Color.gray.opacity(0.12), in: .rect(cornerRadius: 8))
-            .frame(minWidth: 200, maxWidth: 400)
+            .frame(maxWidth: 400)
 
-            Spacer()
-
-            // Date navigation (conditional on calendar mode)
-            if state.showsDateNav {
-                HStack(spacing: 2) {
-                    Button { state.navigateBack() } label: {
-                        Image(systemName: "chevron.left").font(.callout)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(6)
-
-                    Text(state.focusDateLabel)
-                        .font(.callout)
-                        .fontWeight(.semibold)
-                        .frame(minWidth: 180)
-
-                    Button { state.navigateForward() } label: {
-                        Image(systemName: "chevron.right").font(.callout)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(6)
+            // Left: Calendar mode buttons
+            HStack(spacing: 2) {
+                ForEach(ViewType.calendarModes, id: \.self) { mode in
+                    calendarModeButton(for: mode)
                 }
-                .padding(.trailing, 8)
+                Spacer()
             }
 
-            // Today button
-            Button("I dag") {
-                state.goToToday()
+            // Right: Date navigation + Today
+            HStack(spacing: 2) {
+                Spacer()
+
+                if state.showsDateNav {
+                    HStack(spacing: 2) {
+                        Button { state.navigateBack() } label: {
+                            Image(systemName: "chevron.left").font(.callout)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+
+                        Text(state.focusDateLabel)
+                            .font(.callout)
+                            .fontWeight(.semibold)
+                            .frame(minWidth: 180)
+
+                        Button { state.navigateForward() } label: {
+                            Image(systemName: "chevron.right").font(.callout)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                    }
+                    .padding(.trailing, 8)
+                }
+
+                Button("I dag") {
+                    state.goToToday()
+                }
+                .buttonStyle(.plain)
+                .font(.callout)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(.quaternary, in: .rect(cornerRadius: 7))
             }
-            .buttonStyle(.plain)
-            .font(.callout)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(.quaternary, in: .rect(cornerRadius: 7))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)

@@ -12,33 +12,27 @@ struct SectionTabsBar: View {
     @State private var notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
 
     var body: some View {
-        HStack(spacing: 2) {
-            // Kommende tab
-            sectionButton(for: .tba)
-
-            // Wishlist tab (heart icon + count)
-            wishlistButton
-
-            // "Nylig lagt til" — only visible in calendar modes or when active
-            if state.viewType.isCalendarMode || state.viewType == .new {
-                sectionButton(for: .new)
-            }
-
-            Spacer()
-
-            // Platform chips
+        ZStack {
+            // Center: Platform chips (always centered)
             platformChips
 
-            Spacer()
+            // Left: Section tabs
+            HStack(spacing: 2) {
+                sectionButton(for: .tba)
+                wishlistButton
+                if state.viewType.isCalendarMode || state.viewType == .new {
+                    sectionButton(for: .new)
+                }
+                Spacer()
+            }
 
-            // Filter button
-            filterButton
-
-            // Settings
-            settingsButton
-
-            // Import button
-            importButton
+            // Right: Filter, Settings, Import
+            HStack(spacing: 2) {
+                Spacer()
+                filterButton
+                settingsButton
+                importButton
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
