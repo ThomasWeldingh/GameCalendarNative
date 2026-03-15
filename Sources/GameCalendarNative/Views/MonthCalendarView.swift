@@ -230,7 +230,7 @@ struct MiniGameCard: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .aspectRatio(3.0/4.0, contentMode: .fit)
+                .aspectRatio(1.0, contentMode: .fit)
                 .clipped()
 
                 // Rating badge
