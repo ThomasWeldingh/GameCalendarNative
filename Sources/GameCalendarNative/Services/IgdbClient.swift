@@ -4,7 +4,7 @@ struct IgdbClient {
     private let credentials: IgdbCredentials
     private let tokenService: IgdbTokenService
 
-    private static let pageSize = 500
+    private static let pageSize = 200
     private static let targetPlatformIds = [6, 48, 49, 130, 167, 169]
     static let platformNames: [Int: String] = [
         6: "PC",
@@ -20,12 +20,13 @@ struct IgdbClient {
 
     // MARK: - Public
 
-    func fetchGames(from cutoffDate: Date, updatedSince: Date?) async throws -> [NormalizedGame] {
+    func fetchGames(from cutoffDate: Date, to endDate: Date? = nil, updatedSince: Date?) async throws -> [NormalizedGame] {
         let token = try await tokenService.getToken(
             clientId: credentials.clientId,
             clientSecret: credentials.clientSecret
         )
         let unixFrom = Int(cutoffDate.timeIntervalSince1970)
+        let toClause = endDate.map { " & first_release_date < \(Int($0.timeIntervalSince1970))" } ?? ""
         let platformFilter = Self.targetPlatformIds.map(String.init).joined(separator: ",")
         let sinceClause = sinceFilter(updatedSince)
 
@@ -34,7 +35,7 @@ struct IgdbClient {
         var offset = 0
 
         while true {
-            let query = "\(fields) where first_release_date >= \(unixFrom) & platforms = (\(platformFilter))\(sinceClause); sort first_release_date asc; limit \(Self.pageSize); offset \(offset);"
+            let query = "\(fields) where first_release_date >= \(unixFrom)\(toClause) & platforms = (\(platformFilter))\(sinceClause); sort first_release_date asc; limit \(Self.pageSize); offset \(offset);"
             let page = try await fetchPage(query: query, token: token)
             all.append(contentsOf: page)
             if page.count < Self.pageSize { break }

@@ -32,8 +32,40 @@ final class BackgroundRefreshService: @unchecked Sendable {
         let urlString = UserDefaults.standard.string(forKey: "apiBaseURL") ?? "http://localhost:5262"
         guard let baseURL = URL(string: urlString) else { return }
         let client = ApiSyncClient(baseURL: baseURL)
-        let actor = ImportActor(modelContainer: container, apiClient: client)
-        _ = try? await actor.run()
+        let actor = ImportActor(modelContainer: container)
+
+        var result: ImportResult?
+
+        // Try API first, fall back to IGDB
+        do {
+            result = try await actor.runApiSync(client: client)
+        } catch {
+            guard let creds = KeychainService.credentials else { return }
+            let tokenService = IgdbTokenService()
+            let igdb = IgdbClient(credentials: creds, tokenService: tokenService)
+            let igdbActor = ImportActor(modelContainer: container)
+            result = try? await igdbActor.runIgdbProgressive(client: igdb)
+        }
+
+        // Process notification events
+        guard let result else { return }
+        for event in result.events {
+            switch event.kind {
+            case .dateConfirmed:
+                await NotificationService.shared.notifyDateConfirmed(
+                    title: event.title, releaseDate: event.releaseDate, externalId: event.externalId
+                )
+            case .gameUpdated:
+                await NotificationService.shared.notifyGameUpdated(
+                    title: event.title, externalId: event.externalId, changes: event.changes
+                )
+            }
+        }
+
+        // Re-schedule calendar notifications for all wishlisted games
+        let context = ModelContext(container)
+        let entries = (try? context.fetch(FetchDescriptor<WishlistEntry>())) ?? []
+        await NotificationService.shared.rescheduleAll(wishlistedGames: entries.map(\.game))
     }
 }
 #endif

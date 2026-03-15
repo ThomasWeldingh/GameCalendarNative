@@ -14,12 +14,22 @@ struct WishlistView: View {
 
     private let columns = [GridItem(.adaptive(minimum: 130, maximum: 220), spacing: 16)]
 
-    private var upcomingGames: [GameRelease] {
-        let now = Date()
-        let in14 = Calendar.current.date(byAdding: .day, value: 14, to: Calendar.current.startOfDay(for: now))!
+    private var availableNowGames: [GameRelease] {
+        let today = Calendar.current.startOfDay(for: Date())
         return entries.compactMap { entry -> GameRelease? in
             guard let date = entry.game.releaseDate,
-                  date >= Calendar.current.startOfDay(for: now),
+                  date < today else { return nil }
+            return entry.game
+        }
+        .sorted { $0.popularity > $1.popularity }
+    }
+
+    private var upcomingGames: [GameRelease] {
+        let today = Calendar.current.startOfDay(for: Date())
+        let in14 = Calendar.current.date(byAdding: .day, value: 14, to: today)!
+        return entries.compactMap { entry -> GameRelease? in
+            guard let date = entry.game.releaseDate,
+                  date >= today,
                   date <= in14 else { return nil }
             return entry.game
         }
@@ -41,6 +51,28 @@ struct WishlistView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // Available now (already released)
+                        if !availableNowGames.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Tilgjengelig nå")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.secondary)
+                                    .textCase(.uppercase)
+                                    .padding(.horizontal, 20)
+
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(availableNowGames, id: \.externalId) { game in
+                                            UpcomingWishlistCard(game: game)
+                                                .onTapGesture { state.selectedGame = game }
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                            }
+                        }
+
                         // Upcoming section (games within 14 days)
                         if !upcomingGames.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
@@ -63,12 +95,14 @@ struct WishlistView: View {
                             }
                         }
 
-                        // Header with count + ICS download
+                        // Full wishlist grid
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("\(entries.count) spill")
-                                    .font(.callout)
+                                Text("Alle ønsker (\(entries.count))")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
                                     .foregroundStyle(.secondary)
+                                    .textCase(.uppercase)
 
                                 Spacer()
 
@@ -106,7 +140,9 @@ struct WishlistView: View {
     }
 
     private func remove(_ entry: WishlistEntry) {
+        let externalId = entry.game.externalId
         modelContext.delete(entry)
+        Task { await NotificationService.shared.removeAllNotifications(for: externalId) }
     }
 
     private func exportIcs() {

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WebKit
 
 // MARK: - Rating Badge (color-coded, matches web)
 
@@ -30,30 +31,89 @@ struct RatingBadge: View {
 struct HeartOverlayButton: View {
     let game: GameRelease
     @Environment(\.modelContext) private var modelContext
-
-    private var isWishlisted: Bool {
-        !game.wishlistEntries.isEmpty
-    }
+    @State private var wishlisted = false
 
     var body: some View {
         Button {
             toggleWishlist()
         } label: {
-            Image(systemName: isWishlisted ? "heart.fill" : "heart")
+            Image(systemName: wishlisted ? "heart.fill" : "heart")
                 .font(.system(size: 13))
-                .foregroundStyle(isWishlisted ? .red : .white)
+                .foregroundStyle(wishlisted ? .red : .white)
                 .shadow(color: .black.opacity(0.5), radius: 2)
                 .padding(6)
                 .background(.ultraThinMaterial, in: Circle())
         }
         .buttonStyle(.plain)
+        .onAppear { wishlisted = !game.wishlistEntries.isEmpty }
+        .onChange(of: game.wishlistEntries.count) { _, newCount in
+            wishlisted = newCount > 0
+        }
     }
 
     private func toggleWishlist() {
         if let entry = game.wishlistEntries.first {
             modelContext.delete(entry)
+            wishlisted = false
+            Task { await NotificationService.shared.removeAllNotifications(for: game.externalId) }
         } else {
             modelContext.insert(WishlistEntry(game: game))
+            wishlisted = true
+            Task { await NotificationService.shared.scheduleReleaseNotifications(for: game) }
+        }
+        try? modelContext.save()
+    }
+}
+
+// MARK: - Calendar Overlay Button (for card overlays, matches heart style)
+
+struct CalendarOverlayButton: View {
+    let game: GameRelease
+
+    var body: some View {
+        if game.releaseDate != nil {
+            Button {
+                exportIcs()
+            } label: {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 2)
+                    .padding(6)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Legg til i kalender")
+        }
+    }
+
+    private func exportIcs() {
+        guard let icsContent = ICSExporter.buildIcs(for: game) else { return }
+        let filename = "\(game.title.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "-", options: .regularExpression)).ics"
+        guard let fileURL = ICSExporter.saveToFile(content: icsContent, filename: filename) else { return }
+
+        #if os(macOS)
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.calendarEvent]
+        panel.nameFieldStringValue = filename
+        panel.begin { response in
+            if response == .OK, let dest = panel.url {
+                try? FileManager.default.copyItem(at: fileURL, to: dest)
+            }
+        }
+        #endif
+    }
+}
+
+// MARK: - Combined card overlay buttons (heart + calendar)
+
+struct CardOverlayButtons: View {
+    let game: GameRelease
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HeartOverlayButton(game: game)
+            CalendarOverlayButton(game: game)
         }
     }
 }
@@ -83,8 +143,8 @@ struct GameCoverImage: View {
                 }
             }
 
-            // Heart button (top-right)
-            HeartOverlayButton(game: game)
+            // Heart + calendar buttons (top-right)
+            CardOverlayButtons(game: game)
                 .padding(4)
         }
     }
@@ -322,7 +382,13 @@ struct ScreenshotLightbox: View {
 
     private func toggleFullscreen() {
         #if os(macOS)
-        NSApplication.shared.keyWindow?.toggleFullScreen(nil)
+        // The lightbox is inside a sheet (NSPanel) which doesn't support fullscreen.
+        // Toggle the parent window that presented the sheet instead.
+        if let sheetParent = NSApp.keyWindow?.sheetParent {
+            sheetParent.toggleFullScreen(nil)
+        } else if let mainWindow = NSApp.mainWindow {
+            mainWindow.toggleFullScreen(nil)
+        }
         #endif
     }
 }
@@ -351,3 +417,109 @@ struct SkeletonCard: View {
         .redacted(reason: .placeholder)
     }
 }
+
+// MARK: - YouTube In-App Player (WKWebView)
+
+#if os(macOS)
+struct YouTubePlayerView: NSViewRepresentable {
+    let videoId: String
+
+    func makeNSView(context: Context) -> FocusableWKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsAirPlayForMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+        config.preferences.setValue(true, forKey: "fullScreenEnabled")
+
+        // Inject CSS to hide YouTube chrome, keeping only the video player.
+        let cleanupScript = WKUserScript(
+            source: """
+            new MutationObserver(function() {
+                if (!document.getElementById('yt-player-css')) {
+                    var s = document.createElement('style');
+                    s.id = 'yt-player-css';
+                    s.textContent = `
+                        #masthead-container, #secondary, #comments, #below,
+                        ytd-watch-metadata, ytd-merch-shelf-renderer,
+                        #related, #chat, tp-yt-app-drawer, #guide,
+                        ytd-engagement-panel-section-list-renderer,
+                        ytd-mini-guide-renderer, #guide-content,
+                        .ytp-ce-element, .ytp-endscreen-content,
+                        #description, #meta, #info-container,
+                        ytd-watch-info-text { display: none !important; }
+                        body, html, ytd-app { background: #000 !important; overflow: hidden !important; }
+                        #page-manager { margin: 0 !important; padding: 0 !important; }
+                        #primary { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+                        #player-container-outer { max-width: 100% !important; }
+                        #movie_player { position: fixed !important; top: 0; left: 0;
+                                        width: 100vw !important; height: 100vh !important; }
+                        .html5-video-container { width: 100% !important; height: 100% !important; }
+                        video { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+                    `;
+                    document.head.appendChild(s);
+                }
+            }).observe(document, { childList: true, subtree: true });
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(cleanupScript)
+
+        // Auto-focus the YouTube player element so keyboard shortcuts work
+        // (Space=play/pause, arrows=seek/volume, F=fullscreen, Esc=exit fullscreen, etc.)
+        let focusScript = WKUserScript(
+            source: """
+            var _ytFocusInterval = setInterval(function() {
+                var player = document.getElementById('movie_player');
+                if (player) {
+                    player.focus();
+                    clearInterval(_ytFocusInterval);
+                }
+            }, 300);
+            """,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: true
+        )
+        config.userContentController.addUserScript(focusScript)
+
+        let webView = FocusableWKWebView(frame: .zero, configuration: config)
+        webView.setValue(false, forKey: "drawsBackground")
+        return webView
+    }
+
+    func updateNSView(_ webView: FocusableWKWebView, context: Context) {
+        guard context.coordinator.lastVideoId != videoId else { return }
+        context.coordinator.lastVideoId = videoId
+        if let url = URL(string: "https://www.youtube.com/watch?v=\(videoId)") {
+            webView.load(URLRequest(url: url))
+        }
+        // Make the WKWebView first responder so key events reach it
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            webView.window?.makeFirstResponder(webView)
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    class Coordinator {
+        var lastVideoId: String?
+    }
+}
+
+/// WKWebView subclass that eagerly accepts first responder, ensuring keyboard
+/// events (Space, arrows, Esc, F, etc.) reach YouTube's JS player controls.
+class FocusableWKWebView: WKWebView {
+    override var acceptsFirstResponder: Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+        window?.makeFirstResponder(self)
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        let result = super.becomeFirstResponder()
+        // Re-focus the YouTube player element inside the web page
+        evaluateJavaScript("document.getElementById('movie_player')?.focus()") { _, _ in }
+        return result
+    }
+}
+#endif

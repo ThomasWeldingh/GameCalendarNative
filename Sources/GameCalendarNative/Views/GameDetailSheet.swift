@@ -9,13 +9,13 @@ import UIKit
 
 struct GameDetailSheet: View {
     let game: GameRelease
-    let state: AppState
+    @Bindable var state: AppState
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query private var wishlistEntries: [WishlistEntry]
 
     @State private var lightboxIndex: Int? = nil
+    @State private var activeVideoId: String? = nil
 
     private var isWishlisted: Bool {
         wishlistEntries.contains { $0.game.externalId == game.externalId }
@@ -24,67 +24,59 @@ struct GameDetailSheet: View {
     private func toggleWishlist() {
         if let entry = wishlistEntries.first(where: { $0.game.externalId == game.externalId }) {
             modelContext.delete(entry)
+            Task { await NotificationService.shared.removeAllNotifications(for: game.externalId) }
         } else {
             modelContext.insert(WishlistEntry(game: game))
+            Task { await NotificationService.shared.scheduleReleaseNotifications(for: game) }
         }
+    }
+
+    private func close() {
+        state.selectedGame = nil
     }
 
     var body: some View {
         ZStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header: cover + info
-                    HStack(alignment: .top, spacing: 20) {
-                        coverImage
-                        headerInfo
-                    }
+            VStack(spacing: 0) {
+                // Custom header bar (replaces toolbar)
+                headerBar
 
-                    Divider()
+                Divider()
 
-                    // Description
-                    if let desc = game.gameDescription, !desc.isEmpty {
-                        Text(desc)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    // Trailers (thumbnail grid with play overlay, matches web)
-                    if !game.videoIds.isEmpty {
-                        trailerSection
-                    }
-
-                    // Screenshots (clickable, opens lightbox)
-                    if !game.screenshotUrls.isEmpty {
-                        screenshotSection
-                    }
-
-                    // Action buttons (matches web's modal-actions)
-                    actionButtons
-                }
-                .padding(24)
-            }
-            .frame(minWidth: 560, minHeight: 400)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Lukk") { dismiss() }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: toggleWishlist) {
-                        Image(systemName: isWishlisted ? "heart.fill" : "heart")
-                            .foregroundStyle(isWishlisted ? .red : .primary)
-                    }
-                    .help(isWishlisted ? "Fjern fra ønskeliste" : "Legg til ønskeliste")
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    if let url = game.websiteUrl.flatMap({ URL(string: $0) }) {
-                        Link(destination: url) {
-                            Label("Åpne nettside", systemImage: "safari")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Header: cover + info
+                        HStack(alignment: .top, spacing: 20) {
+                            coverImage
+                            headerInfo
                         }
+
+                        Divider()
+
+                        // Description
+                        if let desc = game.gameDescription, !desc.isEmpty {
+                            Text(desc)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        // Trailers (inline player + thumbnail grid)
+                        if !game.videoIds.isEmpty {
+                            trailerSection
+                        }
+
+                        // Screenshots (clickable, opens lightbox)
+                        if !game.screenshotUrls.isEmpty {
+                            screenshotSection
+                        }
+
+                        // Action buttons (website only)
+                        actionButtons
                     }
+                    .padding(24)
                 }
             }
-            .navigationTitle(game.title)
 
             // Screenshot lightbox overlay
             if let index = lightboxIndex {
@@ -97,8 +89,67 @@ struct GameDetailSheet: View {
                     onClose: { lightboxIndex = nil }
                 )
             }
-
         }
+        .onKeyPress(.escape) {
+            // Don't close the modal if a YouTube video is playing —
+            // let the WKWebView handle Esc (exit fullscreen) instead.
+            if activeVideoId != nil { return .ignored }
+            close()
+            return .handled
+        }
+    }
+
+    // MARK: - Header bar
+
+    private var headerBar: some View {
+        HStack(spacing: 12) {
+            Text(game.title)
+                .font(.headline)
+                .lineLimit(1)
+
+            Spacer()
+
+            // Heart (wishlist)
+            Button(action: toggleWishlist) {
+                Image(systemName: isWishlisted ? "heart.fill" : "heart")
+                    .font(.system(size: 14))
+                    .foregroundStyle(isWishlisted ? .red : .primary)
+            }
+            .buttonStyle(.plain)
+            .help(isWishlisted ? "Fjern fra ønskeliste" : "Legg til ønskeliste")
+
+            // Calendar export
+            if game.releaseDate != nil {
+                Button(action: exportSingleIcs) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 13))
+                }
+                .buttonStyle(.plain)
+                .help("Legg til i kalender")
+            }
+
+            // Website link
+            if let url = game.websiteUrl.flatMap({ URL(string: $0) }) {
+                Link(destination: url) {
+                    Image(systemName: "safari")
+                        .font(.system(size: 14))
+                }
+                .help("Åpne nettside")
+            }
+
+            // Close button
+            Button(action: close) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(6)
+                    .background(.quaternary, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Lukk")
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Cover
@@ -203,24 +254,50 @@ struct GameDetailSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Trailers (thumbnail grid with play overlay, matches web)
+    // MARK: - Trailers (inline YouTube player + thumbnail grid)
 
     private var trailerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Trailere")
                 .font(.headline)
 
+            // Inline player (shows when a trailer is selected)
+            #if os(macOS)
+            if let videoId = activeVideoId {
+                ZStack(alignment: .topTrailing) {
+                    YouTubePlayerView(videoId: videoId)
+                        .aspectRatio(16/9, contentMode: .fit)
+                        .frame(maxWidth: 640)
+                        .clipShape(.rect(cornerRadius: 8))
+
+                    // Close player button
+                    Button {
+                        activeVideoId = nil
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                            .padding(6)
+                            .background(.black.opacity(0.6), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(8)
+                }
+            }
+            #endif
+
+            // Thumbnail grid
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(game.videoIds.prefix(4), id: \.self) { videoId in
                         Button {
+                            #if os(macOS)
+                            activeVideoId = videoId
+                            #else
                             if let url = URL(string: "https://www.youtube.com/watch?v=\(videoId)") {
-                                #if os(macOS)
-                                NSWorkspace.shared.open(url)
-                                #else
                                 UIApplication.shared.open(url)
-                                #endif
                             }
+                            #endif
                         } label: {
                             ZStack {
                                 AsyncImage(url: URL(string: "https://img.youtube.com/vi/\(videoId)/mqdefault.jpg")) { image in
@@ -242,6 +319,10 @@ struct GameDetailSheet: View {
                                             .offset(x: 2)
                                     }
                             }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(activeVideoId == videoId ? Color.accentColor : .clear, lineWidth: 2)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -278,22 +359,10 @@ struct GameDetailSheet: View {
         }
     }
 
-    // MARK: - Action buttons (matches web's modal-actions)
+    // MARK: - Action buttons (website link — heart + calendar are in toolbar)
 
     private var actionButtons: some View {
         HStack(spacing: 12) {
-            // Wishlist button with text label
-            Button(action: toggleWishlist) {
-                HStack(spacing: 6) {
-                    Image(systemName: isWishlisted ? "heart.fill" : "heart")
-                        .font(.caption)
-                    Text(isWishlisted ? "På ønskelisten" : "Legg til ønskeliste")
-                        .font(.callout)
-                }
-            }
-            .buttonStyle(.bordered)
-            .tint(isWishlisted ? .red : nil)
-
             // Website link
             if let urlString = game.websiteUrl, let url = URL(string: urlString) {
                 Link(destination: url) {
@@ -301,21 +370,6 @@ struct GameDetailSheet: View {
                         Image(systemName: "globe")
                             .font(.caption)
                         Text("Nettside")
-                            .font(.callout)
-                    }
-                }
-                .buttonStyle(.bordered)
-            }
-
-            // ICS calendar download
-            if game.releaseDate != nil {
-                Button {
-                    exportSingleIcs()
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "calendar.badge.plus")
-                            .font(.caption)
-                        Text("Legg til i kalender")
                             .font(.callout)
                     }
                 }
@@ -350,4 +404,3 @@ struct GameDetailSheet: View {
         #endif
     }
 }
-

@@ -23,23 +23,44 @@ struct MainView: View {
                 CalendarNavigationBar(state: state)
                 SectionTabsBar(state: state, showFilter: $showFilter)
                 Divider()
-                contentView
+                ZStack {
+                    contentView
+                    if !state.searchQuery.isEmpty {
+                        ZStack(alignment: .top) {
+                            Rectangle()
+                                .fill(.background)
+                            SearchResultsView(query: state.searchQuery, state: state)
+                        }
+                    }
+                }
                 Divider()
                 footerBar
             }
             .navigationTitle("")
             .toolbar { macOSToolbar }
         }
-        .searchable(text: $state.searchQuery, prompt: "Søk etter spill...")
         .frame(minWidth: 900, minHeight: 600)
-        .sheet(item: $state.selectedGame) { game in
-            NavigationStack { GameDetailSheet(game: game, state: state) }
-        }
         .overlay {
-            if !state.searchQuery.isEmpty {
-                searchOverlay
+            if state.selectedGame != nil {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture { state.selectedGame = nil }
+                    .transition(.opacity)
             }
         }
+        .overlay {
+            if let game = state.selectedGame {
+                GameDetailSheet(game: game, state: state)
+                    .frame(width: 640)
+                    .frame(minHeight: 400, maxHeight: .infinity)
+                    .background(.background, in: .rect(cornerRadius: 12))
+                    .clipShape(.rect(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.3), radius: 20)
+                    .padding(40)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: state.selectedGame?.externalId)
     }
 
     // MARK: - iOS layout
@@ -174,19 +195,14 @@ struct MainView: View {
         }
     }
 
-    // MARK: - Search overlay
+    // MARK: - Search overlay (iOS only)
 
     private var searchOverlay: some View {
-        VStack(spacing: 0) {
-            #if os(macOS)
-            Color.clear.frame(height: 52)
-            #endif
-            ZStack(alignment: .top) {
-                Rectangle()
-                    .fill(.background)
-                    .ignoresSafeArea()
-                SearchResultsView(query: state.searchQuery, state: state)
-            }
+        ZStack(alignment: .top) {
+            Rectangle()
+                .fill(.background)
+                .ignoresSafeArea()
+            SearchResultsView(query: state.searchQuery, state: state)
         }
     }
 

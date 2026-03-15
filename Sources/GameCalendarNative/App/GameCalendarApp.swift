@@ -26,6 +26,18 @@ struct GameCalendarApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    // Deferred setup — bundle proxy must be ready
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        NotificationService.shared.setupDelegate()
+                        Task {
+                            let granted = await NotificationService.shared.requestPermission()
+                            if granted && !UserDefaults.standard.bool(forKey: "notificationsEnabled") {
+                                UserDefaults.standard.set(true, forKey: "notificationsEnabled")
+                            }
+                        }
+                    }
+                }
         }
         .modelContainer(container)
 

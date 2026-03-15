@@ -156,7 +156,7 @@ struct WeekCoverCard: View {
                     }
                 }
 
-                HeartOverlayButton(game: game)
+                CardOverlayButtons(game: game)
                     .padding(6)
             }
 

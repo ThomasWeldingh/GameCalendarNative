@@ -237,24 +237,76 @@ class AppState {
         return true
     }
 
-    // MARK: - Import (syncs from backend API)
+    // MARK: - Import (API-first, IGDB progressive fallback)
+
+    var importPhase: String? = nil
 
     func runImport(container: ModelContainer) async {
         isImporting = true
         importError = nil
+        importPhase = nil
         defer {
             isImporting = false
+            importPhase = nil
             lastImportedAt = Date()
         }
 
-        let client = ApiSyncClient(baseURL: apiBaseURL)
-        let actor = ImportActor(modelContainer: container, apiClient: client)
+        var result: ImportResult?
+
+        // Try backend API first (fast: 2 HTTP requests)
+        importPhase = "Synkroniserer fra API..."
+        let apiClient = ApiSyncClient(baseURL: apiBaseURL)
+        let actor = ImportActor(modelContainer: container)
         do {
-            lastImportStats = try await actor.run()
-            dataGeneration += 1
+            result = try await actor.runApiSync(client: apiClient)
         } catch {
-            importError = error.localizedDescription
+            // API failed — fall back to IGDB
+            guard let creds = KeychainService.credentials else {
+                importError = "Backend API utilgjengelig og IGDB-nøkler mangler"
+                return
+            }
+
+            let tokenService = IgdbTokenService()
+            let igdbClient = IgdbClient(credentials: creds, tokenService: tokenService)
+            let igdbActor = ImportActor(modelContainer: container)
+
+            importPhase = "Henter nylige spill fra IGDB..."
+            do {
+                result = try await igdbActor.runIgdbProgressive(client: igdbClient)
+            } catch {
+                importError = error.localizedDescription
+            }
         }
+
+        guard let result else { return }
+        lastImportStats = result.stats
+        dataGeneration += 1
+
+        // Process notification events from import
+        await processNotificationEvents(result.events, container: container)
+    }
+
+    private func processNotificationEvents(_ events: [ImportNotificationEvent], container: ModelContainer) async {
+        guard UserDefaults.standard.bool(forKey: "notificationsEnabled") else { return }
+
+        for event in events {
+            switch event.kind {
+            case .dateConfirmed:
+                await NotificationService.shared.notifyDateConfirmed(
+                    title: event.title, releaseDate: event.releaseDate, externalId: event.externalId
+                )
+            case .gameUpdated:
+                await NotificationService.shared.notifyGameUpdated(
+                    title: event.title, externalId: event.externalId, changes: event.changes
+                )
+            }
+        }
+
+        // Re-schedule all calendar notifications (dates may have shifted)
+        let context = ModelContext(container)
+        let entries = (try? context.fetch(FetchDescriptor<WishlistEntry>())) ?? []
+        let games = entries.map(\.game)
+        await NotificationService.shared.rescheduleAll(wishlistedGames: games)
     }
 }
 
