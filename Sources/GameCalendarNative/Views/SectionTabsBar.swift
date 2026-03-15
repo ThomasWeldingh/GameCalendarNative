@@ -9,10 +9,7 @@ struct SectionTabsBar: View {
     @Query private var wishlistEntries: [WishlistEntry]
 
     @State private var showSettings = false
-    @State private var searchExpanded = false
-    @State private var searchText = ""
     @State private var notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
-    @FocusState private var searchFieldFocused: Bool
 
     var body: some View {
         HStack(spacing: 2) {
@@ -31,9 +28,6 @@ struct SectionTabsBar: View {
 
             // Platform chips
             platformChips
-
-            // Expandable search field
-            expandableSearchField
 
             Spacer()
 
@@ -189,75 +183,6 @@ struct SectionTabsBar: View {
         .buttonStyle(.borderedProminent)
         .disabled(state.isImporting)
         .help("Importer spill fra IGDB")
-    }
-
-    // MARK: - Expandable search field
-
-    @ViewBuilder
-    private var expandableSearchField: some View {
-        if searchExpanded {
-            HStack(spacing: 5) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-
-                TextField("Søk spill...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(.caption)
-                    .focused($searchFieldFocused)
-                    .onChange(of: searchText) { _, newValue in
-                        state.searchQuery = newValue
-                    }
-
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                        state.searchQuery = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                Button {
-                    searchText = ""
-                    state.searchQuery = ""
-                    searchExpanded = false
-                    searchFieldFocused = false
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Color.gray.opacity(0.12), in: Capsule())
-            .frame(width: 200)
-        } else {
-            Button {
-                searchExpanded = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    searchFieldFocused = true
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 10))
-                    Text("Søk")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color.gray.opacity(0.12), in: Capsule())
-                .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     // MARK: - Settings button

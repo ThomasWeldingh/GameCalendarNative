@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarNavigationBar: View {
     @Bindable var state: AppState
+    @FocusState private var searchFieldFocused: Bool
 
     var body: some View {
         HStack(spacing: 2) {
@@ -9,6 +10,35 @@ struct CalendarNavigationBar: View {
             ForEach(ViewType.calendarModes, id: \.self) { mode in
                 calendarModeButton(for: mode)
             }
+
+            Spacer()
+
+            // Search field (always visible, Spotlight-style)
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+
+                TextField("Søk spill...", text: $state.searchQuery)
+                    .textFieldStyle(.plain)
+                    .font(.callout)
+                    .focused($searchFieldFocused)
+
+                if !state.searchQuery.isEmpty {
+                    Button {
+                        state.searchQuery = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.gray.opacity(0.12), in: .rect(cornerRadius: 8))
+            .frame(minWidth: 200, maxWidth: 400)
 
             Spacer()
 
@@ -48,6 +78,11 @@ struct CalendarNavigationBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(.bar)
+        .background {
+            Button("") { searchFieldFocused = true }
+                .keyboardShortcut("f", modifiers: .command)
+                .hidden()
+        }
     }
 
     @ViewBuilder
