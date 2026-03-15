@@ -232,7 +232,7 @@ struct MiniGameCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Cover image (portrait ratio)
+            // Cover image (squarish ratio — fits more in cell)
             ZStack(alignment: .bottomLeading) {
                 AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
@@ -249,13 +249,13 @@ struct MiniGameCard: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .aspectRatio(3.0/4.0, contentMode: .fit)
+                .aspectRatio(1.0, contentMode: .fit)
                 .clipped()
 
                 // Rating badge
                 if let rating = game.rating {
                     RatingBadge(score: rating)
-                        .scaleEffect(0.65, anchor: .bottomLeading)
+                        .scaleEffect(0.55, anchor: .bottomLeading)
                         .padding(2)
                 }
             }
@@ -264,8 +264,7 @@ struct MiniGameCard: View {
             // Title
             Text(game.title)
                 .font(.system(size: 9, weight: .semibold))
-                .lineLimit(2)
-                .lineSpacing(1)
+                .lineLimit(1)
                 .foregroundStyle(.primary)
                 .padding(.top, 2)
         }
