@@ -113,40 +113,42 @@ struct DayCell: View {
     let cellHeight: CGFloat
     let onSelect: (GameRelease) -> Void
 
-    private var maxVisible: Int {
-        if cellHeight < 100 { return 2 }
-        if cellHeight < 140 { return 3 }
-        if cellHeight < 200 { return 5 }
-        return 7
+    private enum CellMode {
+        case compact   // < 100pt — thin pills, small text
+        case normal    // 100-159pt — medium pills
+        case expanded  // >= 160pt — mini cards with cover art
     }
 
-    private var isCompact: Bool { cellHeight < 100 }
+    private var mode: CellMode {
+        if cellHeight < 100 { return .compact }
+        if cellHeight < 160 { return .normal }
+        return .expanded
+    }
+
+    private var maxVisible: Int {
+        switch mode {
+        case .compact:  return 2
+        case .normal:   return 3
+        case .expanded: return cellHeight < 240 ? 2 : 3
+        }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
+        VStack(alignment: .leading, spacing: mode == .compact ? 1 : 2) {
             // Day number
-            HStack {
-                Text("\(Calendar.current.component(.day, from: date))")
-                    .font(isCompact ? .caption : .callout)
-                    .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
-                    .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
-                    .background(isToday ? Color.accentColor : .clear, in: Circle())
-                Spacer()
-            }
-            .padding(.horizontal, 4)
-            .padding(.top, 4)
+            dayHeader
 
-            // Game pills
-            ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
-                GamePill(game: game, compact: isCompact)
-                    .onTapGesture { onSelect(game) }
+            // Game entries — pills or mini cards depending on mode
+            if mode == .expanded {
+                miniCardGrid
+            } else {
+                pillList
             }
 
             // Overflow indicator
             if games.count > maxVisible {
                 Text("+\(games.count - maxVisible) til")
-                    .font(.system(size: isCompact ? 10 : 11))
+                    .font(.system(size: mode == .compact ? 10 : 11))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
             }
@@ -159,9 +161,95 @@ struct DayCell: View {
         .background(isCurrentMonth ? Color(.windowBackgroundColor) : Color(.underPageBackgroundColor))
         .opacity(isCurrentMonth ? 1 : 0.5)
     }
+
+    // MARK: - Day header
+
+    private var dayHeader: some View {
+        HStack {
+            Text("\(Calendar.current.component(.day, from: date))")
+                .font(mode == .compact ? .caption : .callout)
+                .fontWeight(isToday ? .bold : .regular)
+                .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
+                .frame(width: mode == .compact ? 22 : 26, height: mode == .compact ? 22 : 26)
+                .background(isToday ? Color.accentColor : .clear, in: Circle())
+            Spacer()
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 4)
+    }
+
+    // MARK: - Pill list (compact & normal modes)
+
+    private var pillList: some View {
+        ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
+            GamePill(game: game, compact: mode == .compact)
+                .onTapGesture { onSelect(game) }
+        }
+    }
+
+    // MARK: - Mini card grid (expanded mode)
+
+    private var miniCardGrid: some View {
+        HStack(alignment: .top, spacing: 4) {
+            ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
+                MiniGameCard(game: game)
+                    .onTapGesture { onSelect(game) }
+            }
+        }
+        .padding(.horizontal, 4)
+    }
 }
 
-// MARK: - Game pill
+// MARK: - Mini game card (expanded cell mode)
+
+struct MiniGameCard: View {
+    let game: GameRelease
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Cover image (portrait ratio)
+            ZStack(alignment: .bottomLeading) {
+                AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    LinearGradient(
+                        colors: [game.title.pillColor, game.title.pillColor.opacity(0.5)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .overlay {
+                        Text(game.title.prefix(2).uppercased())
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .aspectRatio(3.0/4.0, contentMode: .fit)
+                .clipped()
+
+                // Rating badge
+                if let rating = game.rating {
+                    RatingBadge(score: rating)
+                        .scaleEffect(0.7, anchor: .bottomLeading)
+                        .padding(2)
+                }
+            }
+            .clipShape(.rect(cornerRadius: 4))
+
+            // Title
+            Text(game.title)
+                .font(.system(size: 10, weight: .semibold))
+                .lineLimit(2)
+                .lineSpacing(1)
+                .foregroundStyle(.primary)
+                .padding(.top, 3)
+                .padding(.horizontal, 1)
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+}
+
+// MARK: - Game pill (compact & normal modes)
 
 struct GamePill: View {
     let game: GameRelease
