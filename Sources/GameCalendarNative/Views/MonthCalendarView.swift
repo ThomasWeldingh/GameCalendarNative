@@ -39,6 +39,7 @@ struct MonthCalendarView: View {
                             isToday: calendar.isDateInToday(date),
                             games: gamesFor(date: date),
                             cellHeight: rowHeight,
+                            useCards: state.monthCardLayout,
                             onSelect: { state.selectedGame = $0 }
                         )
                     }
@@ -111,29 +112,26 @@ struct DayCell: View {
     let isToday: Bool
     let games: [GameRelease]
     let cellHeight: CGFloat
+    var useCards: Bool = false
     let onSelect: (GameRelease) -> Void
 
-    private enum CellMode {
-        case compact   // < 100pt — thin pills, small text
-        case normal    // 100-129pt — medium pills
-        case expanded  // >= 130pt — 2-column mini card grid
-    }
+    private var isCompact: Bool { cellHeight < 100 }
 
-    private var mode: CellMode {
-        if cellHeight < 100 { return .compact }
-        if cellHeight < 130 { return .normal }
-        return .expanded
-    }
+    /// Use card layout only when toggled on AND cells are tall enough
+    private var showCards: Bool { useCards && cellHeight >= 130 }
 
     private var maxVisible: Int {
-        switch mode {
-        case .compact:  return 2
-        case .normal:   return 3
-        case .expanded:
-            if cellHeight < 220 { return 2 }      // 1 row of 2
-            if cellHeight < 320 { return 4 }      // 2 rows of 2
-            return 6                               // 3 rows of 2
+        if showCards {
+            if cellHeight < 220 { return 2 }
+            if cellHeight < 320 { return 4 }
+            return 6
         }
+        if isCompact { return 2 }
+        // Scale pills with available height
+        if cellHeight < 130 { return 3 }
+        if cellHeight < 180 { return 4 }
+        if cellHeight < 240 { return 6 }
+        return 8
     }
 
     private let miniCardColumns = [
@@ -142,12 +140,12 @@ struct DayCell: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: mode == .compact ? 1 : 2) {
+        VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
             // Day number
             dayHeader
 
             // Game entries — pills or 2-column mini cards
-            if mode == .expanded {
+            if showCards {
                 miniCardGrid
             } else {
                 pillList
@@ -156,7 +154,7 @@ struct DayCell: View {
             // Overflow indicator
             if games.count > maxVisible {
                 Text("+\(games.count - maxVisible) til")
-                    .font(.system(size: mode == .compact ? 10 : 11))
+                    .font(.system(size: isCompact ? 10 : 11))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
             }
@@ -175,10 +173,10 @@ struct DayCell: View {
     private var dayHeader: some View {
         HStack {
             Text("\(Calendar.current.component(.day, from: date))")
-                .font(mode == .compact ? .caption : .callout)
+                .font(isCompact ? .caption : .callout)
                 .fontWeight(isToday ? .bold : .regular)
                 .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
-                .frame(width: mode == .compact ? 22 : 26, height: mode == .compact ? 22 : 26)
+                .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
                 .background(isToday ? Color.accentColor : .clear, in: Circle())
             Spacer()
         }
@@ -186,16 +184,16 @@ struct DayCell: View {
         .padding(.top, 4)
     }
 
-    // MARK: - Pill list (compact & normal modes)
+    // MARK: - Pill list
 
     private var pillList: some View {
         ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
-            GamePill(game: game, compact: mode == .compact)
+            GamePill(game: game, compact: isCompact)
                 .onTapGesture { onSelect(game) }
         }
     }
 
-    // MARK: - 2-column mini card grid (expanded mode)
+    // MARK: - 2-column mini card grid
 
     private var miniCardGrid: some View {
         LazyVGrid(columns: miniCardColumns, alignment: .leading, spacing: 4) {

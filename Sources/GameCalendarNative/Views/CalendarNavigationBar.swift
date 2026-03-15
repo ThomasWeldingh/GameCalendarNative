@@ -33,11 +33,32 @@ struct CalendarNavigationBar: View {
             .background(Color.gray.opacity(0.12), in: .rect(cornerRadius: 8))
             .frame(maxWidth: 400)
 
-            // Left: Calendar mode buttons
+            // Left: Calendar mode buttons + layout toggle
             HStack(spacing: 2) {
                 ForEach(ViewType.calendarModes, id: \.self) { mode in
                     calendarModeButton(for: mode)
                 }
+
+                // Card/list toggle (month view only)
+                if state.viewType == .month {
+                    Divider()
+                        .frame(height: 18)
+                        .padding(.horizontal, 4)
+
+                    Button {
+                        state.monthCardLayout.toggle()
+                    } label: {
+                        Image(systemName: state.monthCardLayout ? "square.grid.2x2" : "list.bullet")
+                            .font(.callout)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 7)
+                            .background(Color.accentColor.opacity(0.12), in: .rect(cornerRadius: 7))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                    .help(state.monthCardLayout ? "Vis som liste" : "Vis som kort")
+                }
+
                 Spacer()
             }
 

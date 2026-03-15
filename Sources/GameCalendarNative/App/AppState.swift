@@ -58,6 +58,11 @@ class AppState {
     // Search
     var searchQuery: String = ""
 
+    // Month view layout toggle (persisted)
+    var monthCardLayout: Bool = false {
+        didSet { UserDefaults.standard.set(monthCardLayout, forKey: "monthCardLayout") }
+    }
+
     // Filters (persisted to UserDefaults)
     var activePlatforms: Set<String> = [] {
         didSet { if !isLoadingFilters { saveFilters() } }
@@ -126,6 +131,7 @@ class AppState {
         if defaults.object(forKey: "showIndie") != nil {
             showIndie = defaults.bool(forKey: "showIndie")
         }
+        monthCardLayout = defaults.bool(forKey: "monthCardLayout")
     }
 
     // MARK: - Navigation
