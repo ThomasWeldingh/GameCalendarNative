@@ -6,7 +6,6 @@ struct MainView: View {
     @Bindable var state: AppState
 
     @State private var showFilter = false
-    @Query private var wishlistEntries: [WishlistEntry]
 
     var body: some View {
         #if os(iOS)
@@ -21,7 +20,8 @@ struct MainView: View {
     private var macOSLayout: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                tabStrip
+                CalendarNavigationBar(state: state)
+                SectionTabsBar(state: state, showFilter: $showFilter)
                 Divider()
                 contentView
                 Divider()
@@ -42,103 +42,11 @@ struct MainView: View {
         }
     }
 
-    // MARK: - Tab strip (web-style second row)
-
-    private var tabStrip: some View {
-        HStack(spacing: 2) {
-            ForEach(ViewType.allCases, id: \.self) { type in
-                tabButton(for: type)
-            }
-
-            // Today button
-            Button("I dag") {
-                state.goToToday()
-            }
-            .buttonStyle(.plain)
-            .font(.callout)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(.quaternary, in: .rect(cornerRadius: 7))
-            .padding(.leading, 4)
-
-            Spacer()
-
-            // Platform chips (centered)
-            platformChips
-
-            Spacer()
-
-            // Date navigation (month/week/day only)
-            if state.showsDateNav {
-                HStack(spacing: 2) {
-                    Button { state.navigateBack() } label: {
-                        Image(systemName: "chevron.left").font(.callout)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(6)
-
-                    Text(state.focusDateLabel)
-                        .font(.callout)
-                        .fontWeight(.semibold)
-                        .frame(minWidth: 180)
-
-                    Button { state.navigateForward() } label: {
-                        Image(systemName: "chevron.right").font(.callout)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(6)
-                }
-                .padding(.trailing, 8)
-            }
-
-            // Filter button
-            filterButton
-
-            // Import
-            importButton
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(.bar)
-    }
-
-    @ViewBuilder
-    private func tabButton(for type: ViewType) -> some View {
-        let isActive = state.viewType == type
-        Button {
-            state.viewType = type
-        } label: {
-            HStack(spacing: 5) {
-                if type == .wishlist {
-                    Image(systemName: "heart.fill")
-                        .font(.callout)
-                        .foregroundStyle(.red)
-                    if wishlistEntries.count > 0 {
-                        Text("\(wishlistEntries.count)")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(.red, in: Capsule())
-                            .foregroundStyle(.white)
-                    }
-                } else {
-                    Text(type.label)
-                        .font(.callout)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(isActive ? Color.accentColor.opacity(0.12) : Color.clear, in: .rect(cornerRadius: 7))
-            .foregroundStyle(isActive ? Color.accentColor : Color.primary)
-            .fontWeight(isActive ? .semibold : .regular)
-        }
-        .buttonStyle(.plain)
-    }
-
     // MARK: - iOS layout
 
     #if os(iOS)
+    @Query private var wishlistEntries: [WishlistEntry]
+
     private var iOSLayout: some View {
         TabView(selection: $state.viewType) {
             ForEach(ViewType.allCases, id: \.self) { type in
@@ -146,7 +54,7 @@ struct MainView: View {
                     iOSContent(for: type)
                         .navigationTitle(type.label)
                         .toolbar {
-                            if type == .month || type == .week || type == .day {
+                            if type.isCalendarMode {
                                 ToolbarItemGroup(placement: .navigationBarLeading) {
                                     dateNavButtons
                                 }
@@ -161,7 +69,7 @@ struct MainView: View {
                     if type == .wishlist {
                         Label("\(type.label) \(wishlistEntries.count)", systemImage: type.icon)
                     } else {
-                        Label(type.label, systemImage: type.icon)
+                        Label(type.shortLabel, systemImage: type.icon)
                     }
                 }
                 .tag(type)
@@ -198,6 +106,45 @@ struct MainView: View {
         case .tba:      TbaView(state: state)
         case .wishlist: WishlistView(state: state)
         case .new:      NewGamesView(state: state)
+        }
+    }
+
+    // iOS-only toolbar buttons (kept here since iOS layout is separate)
+    private var filterButton: some View {
+        Button {
+            showFilter.toggle()
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+        }
+    }
+
+    private var importButton: some View {
+        Button {
+            Task { await state.runImport(container: modelContext.container) }
+        } label: {
+            if state.isImporting {
+                ProgressView().controlSize(.small)
+            } else {
+                Image(systemName: "arrow.clockwise")
+            }
+        }
+        .disabled(state.isImporting)
+    }
+
+    private var dateNavButtons: some View {
+        HStack(spacing: 0) {
+            Button(action: state.navigateBack) {
+                Image(systemName: "chevron.left")
+            }
+            .buttonStyle(.plain)
+            Button(state.focusDateLabel, action: state.goToToday)
+                .buttonStyle(.plain)
+                .font(.headline)
+                .frame(minWidth: 160)
+            Button(action: state.navigateForward) {
+                Image(systemName: "chevron.right")
+            }
+            .buttonStyle(.plain)
         }
     }
     #endif
@@ -252,118 +199,12 @@ struct MainView: View {
         }
     }
 
-    // MARK: - Reusable pieces
-
-    private var dateNavButtons: some View {
-        HStack(spacing: 0) {
-            Button(action: state.navigateBack) {
-                Image(systemName: "chevron.left")
-            }
-            .buttonStyle(.plain)
-            Button(state.focusDateLabel, action: state.goToToday)
-                .buttonStyle(.plain)
-                .font(.headline)
-                .frame(minWidth: 160)
-            Button(action: state.navigateForward) {
-                Image(systemName: "chevron.right")
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var filterButton: some View {
-        Button {
-            showFilter.toggle()
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: "line.3.horizontal.decrease")
-                Text("Filter")
-                if activeFilterCount > 0 {
-                    Text("\(activeFilterCount)")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(Color.accentColor, in: Capsule())
-                        .foregroundStyle(.white)
-                }
-            }
-        }
-        .buttonStyle(.bordered)
-        .help("Filtrering")
-        #if os(macOS)
-        .popover(isPresented: $showFilter, arrowEdge: .bottom) {
-            FilterView(state: state)
-        }
-        #endif
-    }
-
-    private var importButton: some View {
-        Button {
-            Task { await state.runImport(container: modelContext.container) }
-        } label: {
-            if state.isImporting {
-                ProgressView().controlSize(.small)
-            } else {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Importer")
-                }
-            }
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(state.isImporting)
-        .help("Importer spill fra IGDB")
-    }
-
     @ViewBuilder
     private var importStatsLabel: some View {
         if let stats = state.lastImportStats {
             Text("+\(stats.inserted) nye")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        }
-    }
-
-    private var activeFilterCount: Int {
-        var count = 0
-        if state.minPopularity > 0 { count += 1 }
-        if !state.selectedGenres.isEmpty { count += 1 }
-        if !state.selectedPublishers.isEmpty { count += 1 }
-        if !state.showIndie { count += 1 }
-        return count
-    }
-
-    @ViewBuilder
-    private var platformChips: some View {
-        HStack(spacing: 6) {
-            ForEach(["PC", "PlayStation", "Xbox", "Switch"], id: \.self) { platform in
-                let isActive = state.activePlatforms.contains(platform)
-                let color = platformColor(platform)
-                Button {
-                    if isActive { state.activePlatforms.remove(platform) }
-                    else { state.activePlatforms.insert(platform) }
-                } label: {
-                    Text(platform)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(isActive ? color : color.opacity(0.12), in: Capsule())
-                        .foregroundStyle(isActive ? .white : color)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func platformColor(_ platform: String) -> Color {
-        switch platform {
-        case "PC":          return .blue
-        case "PlayStation": return .indigo
-        case "Xbox":        return .green
-        case "Switch":      return .red
-        default:            return .gray
         }
     }
 
@@ -391,7 +232,7 @@ struct MainView: View {
 
             if let stats = state.lastImportStats, stats.inserted > 0 {
                 Button {
-                    state.viewType = .new
+                    state.switchToSection(.new)
                 } label: {
                     HStack(spacing: 4) {
                         Text("+\(stats.inserted) nye spill")

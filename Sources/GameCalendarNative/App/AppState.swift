@@ -10,14 +10,15 @@ enum ViewType: String, CaseIterable {
         case .month:    return "Måned"
         case .week:     return "Uke"
         case .day:      return "Dag"
-        case .tba:      return "TBA"
+        case .tba:      return "Kommende"
         case .wishlist: return "Ønskeliste"
-        case .new:      return "Nytt"
+        case .new:      return "Nylig lagt til"
         }
     }
 
     var shortLabel: String {
         switch self {
+        case .new:      return "Nylig"
         case .wishlist: return "Ønskeliste"
         default: return label
         }
@@ -33,6 +34,16 @@ enum ViewType: String, CaseIterable {
         case .new:      return "sparkles"
         }
     }
+
+    var isCalendarMode: Bool {
+        switch self {
+        case .month, .week, .day: return true
+        case .tba, .wishlist, .new: return false
+        }
+    }
+
+    static var calendarModes: [ViewType] { [.month, .week, .day] }
+    static var sectionTabs: [ViewType] { [.tba, .wishlist, .new] }
 }
 
 @Observable
@@ -40,6 +51,7 @@ enum ViewType: String, CaseIterable {
 class AppState {
     // Navigation
     var viewType: ViewType = .month
+    var lastCalendarMode: ViewType = .month
     var focusDate: Date = Calendar.current.startOfMonth(for: .now)
     var selectedGame: GameRelease? = nil
 
@@ -119,7 +131,8 @@ class AppState {
     // MARK: - Navigation
 
     var focusDateLabel: String {
-        switch viewType {
+        let mode = viewType.isCalendarMode ? viewType : lastCalendarMode
+        switch mode {
         case .month:
             return focusDate.formatted(.dateTime.month(.wide).year())
         case .week:
@@ -157,6 +170,9 @@ class AppState {
     }
 
     func goToToday() {
+        if !viewType.isCalendarMode {
+            viewType = lastCalendarMode
+        }
         switch viewType {
         case .day:
             focusDate = Calendar.current.startOfDay(for: .now)
@@ -165,6 +181,24 @@ class AppState {
         default:
             focusDate = Calendar.current.startOfMonth(for: .now)
         }
+    }
+
+    func switchToCalendarMode(_ mode: ViewType) {
+        guard mode.isCalendarMode else { return }
+        lastCalendarMode = mode
+        viewType = mode
+    }
+
+    func switchToSection(_ section: ViewType) {
+        guard !section.isCalendarMode else { return }
+        if viewType.isCalendarMode {
+            lastCalendarMode = viewType
+        }
+        viewType = section
+    }
+
+    func returnToCalendar() {
+        viewType = lastCalendarMode
     }
 
     // MARK: - Filter snapshot (for consolidated .task(id:) triggers)
