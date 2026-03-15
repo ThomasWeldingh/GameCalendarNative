@@ -126,12 +126,12 @@ struct DayCell: View {
             if cellHeight < 320 { return 4 }
             return 6
         }
-        if isCompact { return 2 }
-        // Scale pills with available height
-        if cellHeight < 130 { return 3 }
-        if cellHeight < 180 { return 4 }
-        if cellHeight < 240 { return 6 }
-        return 8
+        // Day header ≈ 34pt, overflow text ≈ 18pt, each pill ≈ 28pt (compact) or 30pt (normal)
+        let headerHeight: CGFloat = 34
+        let overflowHeight: CGFloat = 18
+        let pillHeight: CGFloat = isCompact ? 24 : 30
+        let available = cellHeight - headerHeight - overflowHeight
+        return max(1, Int(available / pillHeight))
     }
 
     private let miniCardColumns = [
