@@ -38,9 +38,14 @@ struct MonthCalendarView: View {
                             isCurrentMonth: calendar.isDate(date, equalTo: state.focusDate, toGranularity: .month),
                             isToday: calendar.isDateInToday(date),
                             games: gamesFor(date: date),
+                            totalGameCount: totalGamesFor(date: date),
                             cellHeight: rowHeight,
                             useCards: state.monthCardLayout,
-                            onSelect: { state.selectedGame = $0 }
+                            onSelect: { state.selectedGame = $0 },
+                            onShowDay: {
+                                state.focusDate = date
+                                state.switchToCalendarMode(.day)
+                            }
                         )
                     }
                 }
@@ -54,16 +59,23 @@ struct MonthCalendarView: View {
 
     private var gridDays: [Date] {
         let start = calendar.startOfMonth(for: state.focusDate)
-        // Weekday offset (Mon=1…Sun=7 → 0-based Mon=0)
         let weekday = (calendar.component(.weekday, from: start) + 5) % 7
         let gridStart = calendar.date(byAdding: .day, value: -weekday, to: start)!
         return (0..<42).compactMap { calendar.date(byAdding: .day, value: $0, to: gridStart) }
     }
 
+    /// Returns the top 2 most popular games for a date
     private func gamesFor(date: Date) -> [GameRelease] {
         let day = calendar.component(.day, from: date)
         guard calendar.isDate(date, equalTo: state.focusDate, toGranularity: .month) else { return [] }
-        return gamesByDay[day] ?? []
+        return Array((gamesByDay[day] ?? []).prefix(2))
+    }
+
+    /// Returns total game count for a date (for overflow indicator)
+    private func totalGamesFor(date: Date) -> Int {
+        let day = calendar.component(.day, from: date)
+        guard calendar.isDate(date, equalTo: state.focusDate, toGranularity: .month) else { return 0 }
+        return (gamesByDay[day] ?? []).count
     }
 
     // MARK: - Data loading
@@ -73,8 +85,6 @@ struct MonthCalendarView: View {
         let end = calendar.date(byAdding: .month, value: 1, to: start)!
         let minPop = state.minPopularity
 
-        // Fetch games with dates in range — avoid force-unwrap in predicate
-        // (SwiftData's #Predicate may not translate `!` correctly to SQL)
         let predicate = #Predicate<GameRelease> { game in
             game.popularity >= minPop
         }
@@ -92,6 +102,7 @@ struct MonthCalendarView: View {
             return
         }
 
+        // Games are already sorted by popularity (desc) from the fetch
         var grouped: [Int: [GameRelease]] = [:]
         for game in fetched {
             guard let date = game.releaseDate,
@@ -110,29 +121,17 @@ struct DayCell: View {
     let date: Date
     let isCurrentMonth: Bool
     let isToday: Bool
-    let games: [GameRelease]
+    let games: [GameRelease]       // Already limited to top 2
+    let totalGameCount: Int        // Total count for overflow
     let cellHeight: CGFloat
     var useCards: Bool = false
     let onSelect: (GameRelease) -> Void
+    let onShowDay: () -> Void
 
     private var isCompact: Bool { cellHeight < 100 }
-
-    /// Use card layout only when toggled on AND cells are tall enough
     private var showCards: Bool { useCards && cellHeight >= 130 }
 
-    private var maxVisible: Int {
-        if showCards {
-            if cellHeight < 220 { return 2 }
-            if cellHeight < 320 { return 4 }
-            return 6
-        }
-        // Day header ≈ 34pt, overflow text ≈ 18pt, each pill ≈ 28pt (compact) or 30pt (normal)
-        let headerHeight: CGFloat = 34
-        let overflowHeight: CGFloat = 18
-        let pillHeight: CGFloat = isCompact ? 24 : 30
-        let available = cellHeight - headerHeight - overflowHeight
-        return max(1, Int(available / pillHeight))
-    }
+    private var overflowCount: Int { totalGameCount - games.count }
 
     private let miniCardColumns = [
         GridItem(.flexible(), spacing: 4),
@@ -140,23 +139,28 @@ struct DayCell: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
-            // Day number — always visible above content
+        VStack(alignment: .leading, spacing: 0) {
+            // Day number header
             dayHeader
 
-            // Game entries — pills or 2-column mini cards
             if showCards {
                 miniCardGrid
             } else {
                 pillList
             }
 
-            // Overflow indicator
-            if games.count > maxVisible {
-                Text("+\(games.count - maxVisible) til")
-                    .font(.system(size: isCompact ? 10 : 11))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
+            // Overflow indicator — clickable, navigates to day view
+            if overflowCount > 0 {
+                Button {
+                    onShowDay()
+                } label: {
+                    Text("+\(overflowCount) til")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                }
+                .buttonStyle(.plain)
             }
 
             Spacer(minLength: 0)
@@ -171,31 +175,24 @@ struct DayCell: View {
     // MARK: - Day header
 
     private var dayHeader: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("\(Calendar.current.component(.day, from: date))")
-                    .font(isCompact ? .caption : .callout)
-                    .fontWeight(isToday ? .bold : .regular)
-                    .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
-                    .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
-                    .background(isToday ? Color.accentColor : .clear, in: Circle())
-                Spacer()
-            }
-            .padding(.horizontal, 4)
-            .padding(.top, 4)
-            .padding(.bottom, showCards ? 4 : 0)
-
-            // Separator line in card mode
-            if showCards {
-                Divider()
-            }
+        HStack {
+            Text("\(Calendar.current.component(.day, from: date))")
+                .font(isCompact ? .caption : .callout)
+                .fontWeight(isToday ? .bold : .regular)
+                .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
+                .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
+                .background(isToday ? Color.accentColor : .clear, in: Circle())
+            Spacer()
         }
+        .padding(.horizontal, 4)
+        .padding(.top, 4)
+        .padding(.bottom, 2)
     }
 
     // MARK: - Pill list
 
     private var pillList: some View {
-        ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
+        ForEach(games, id: \.externalId) { game in
             GamePill(game: game, compact: isCompact)
                 .onTapGesture { onSelect(game) }
         }
@@ -205,7 +202,7 @@ struct DayCell: View {
 
     private var miniCardGrid: some View {
         LazyVGrid(columns: miniCardColumns, alignment: .leading, spacing: 4) {
-            ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
+            ForEach(games, id: \.externalId) { game in
                 MiniGameCard(game: game)
                     .onTapGesture { onSelect(game) }
             }
@@ -214,56 +211,45 @@ struct DayCell: View {
     }
 }
 
-// MARK: - Mini game card (expanded cell mode)
+// MARK: - Mini game card
 
 struct MiniGameCard: View {
     let game: GameRelease
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 2) {
             // Cover image — guaranteed 1:1 square
-            ZStack(alignment: .bottomLeading) {
-                Color.clear
-                    .aspectRatio(1, contentMode: .fit)
-                    .overlay {
-                        AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
-                            image.resizable().scaledToFill()
-                        } placeholder: {
-                            LinearGradient(
-                                colors: [game.title.pillColor, game.title.pillColor.opacity(0.5)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            .overlay {
-                                Text(game.title.prefix(2).uppercased())
-                                    .font(.system(size: 12, weight: .heavy))
-                                    .foregroundStyle(.white.opacity(0.7))
-                            }
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        LinearGradient(
+                            colors: [game.title.pillColor, game.title.pillColor.opacity(0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .overlay {
+                            Text(game.title.prefix(2).uppercased())
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundStyle(.white.opacity(0.7))
                         }
                     }
-                    .clipped()
-
-                // Rating badge
-                if let rating = game.rating {
-                    RatingBadge(score: rating)
-                        .scaleEffect(0.65, anchor: .bottomLeading)
-                        .padding(2)
                 }
-            }
-            .clipShape(.rect(cornerRadius: 4))
+                .clipShape(.rect(cornerRadius: 4))
 
             // Title
             Text(game.title)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 9, weight: .medium))
                 .lineLimit(1)
                 .foregroundStyle(.primary)
-                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
 }
 
-// MARK: - Game pill (compact & normal modes)
+// MARK: - Game pill
 
 struct GamePill: View {
     let game: GameRelease
