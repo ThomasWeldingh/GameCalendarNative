@@ -70,16 +70,16 @@ struct MonthCalendarView: View {
         let end = calendar.date(byAdding: .month, value: 1, to: start)!
         let minPop = state.minPopularity
 
+        // Fetch games with dates in range — avoid force-unwrap in predicate
+        // (SwiftData's #Predicate may not translate `!` correctly to SQL)
         let predicate = #Predicate<GameRelease> { game in
-            game.releaseDate != nil
-            && game.releaseDate! >= start
-            && game.releaseDate! < end
-            && game.popularity >= minPop
+            game.popularity >= minPop
         }
-        let descriptor = FetchDescriptor<GameRelease>(
+        var descriptor = FetchDescriptor<GameRelease>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
+        descriptor.fetchLimit = 5000
 
         let fetched: [GameRelease]
         do {
@@ -91,7 +91,9 @@ struct MonthCalendarView: View {
 
         var grouped: [Int: [GameRelease]] = [:]
         for game in fetched {
-            guard let date = game.releaseDate, state.matches(game) else { continue }
+            guard let date = game.releaseDate,
+                  date >= start && date < end,
+                  state.matches(game) else { continue }
             let day = calendar.component(.day, from: date)
             grouped[day, default: []].append(game)
         }

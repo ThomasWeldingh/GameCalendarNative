@@ -45,20 +45,24 @@ struct WeekView: View {
         let sunday = calendar.date(byAdding: .day, value: 7, to: monday)!
         let minPop = state.minPopularity
 
+        // Simple predicate — date filtering done in Swift to avoid
+        // SwiftData #Predicate force-unwrap translation issues
         let predicate = #Predicate<GameRelease> { game in
-            game.releaseDate != nil
-            && game.releaseDate! >= monday
-            && game.releaseDate! < sunday
-            && game.popularity >= minPop
+            game.popularity >= minPop
         }
-        let descriptor = FetchDescriptor<GameRelease>(
+        var descriptor = FetchDescriptor<GameRelease>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
+        descriptor.fetchLimit = 5000
 
         do {
             let fetched = try modelContext.fetch(descriptor)
-            games = fetched.filter { state.matches($0) }
+            games = fetched.filter { game in
+                guard let date = game.releaseDate,
+                      date >= monday && date < sunday else { return false }
+                return state.matches(game)
+            }
         } catch {
             print("[WeekView] Fetch failed: \(error)")
         }
