@@ -107,8 +107,12 @@ struct TbaView: View {
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
         descriptor.fetchLimit = 500
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
-        games = fetched.filter { state.matches($0) }
+        do {
+            let fetched = try modelContext.fetch(descriptor)
+            games = fetched.filter { state.matches($0) }
+        } catch {
+            print("[TbaView] Fetch failed: \(error)")
+        }
         isLoading = false
     }
 }

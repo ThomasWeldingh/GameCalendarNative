@@ -69,18 +69,25 @@ struct MonthCalendarView: View {
         let start = calendar.startOfMonth(for: state.focusDate)
         let end = calendar.date(byAdding: .month, value: 1, to: start)!
         let minPop = state.minPopularity
-        let nilDate = Date.distantPast
 
         let predicate = #Predicate<GameRelease> { game in
-            (game.releaseDate ?? nilDate) >= start
-            && (game.releaseDate ?? nilDate) < end
+            game.releaseDate != nil
+            && game.releaseDate! >= start
+            && game.releaseDate! < end
             && game.popularity >= minPop
         }
         let descriptor = FetchDescriptor<GameRelease>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+
+        let fetched: [GameRelease]
+        do {
+            fetched = try modelContext.fetch(descriptor)
+        } catch {
+            print("[MonthCalendarView] Fetch failed: \(error)")
+            return
+        }
 
         var grouped: [Int: [GameRelease]] = [:]
         for game in fetched {

@@ -44,19 +44,24 @@ struct WeekView: View {
         let monday = calendar.startOfWeek(for: state.focusDate)
         let sunday = calendar.date(byAdding: .day, value: 7, to: monday)!
         let minPop = state.minPopularity
-        let nilDate = Date.distantPast
 
         let predicate = #Predicate<GameRelease> { game in
-            (game.releaseDate ?? nilDate) >= monday
-            && (game.releaseDate ?? nilDate) < sunday
+            game.releaseDate != nil
+            && game.releaseDate! >= monday
+            && game.releaseDate! < sunday
             && game.popularity >= minPop
         }
         let descriptor = FetchDescriptor<GameRelease>(
             predicate: predicate,
             sortBy: [SortDescriptor(\.popularity, order: .reverse)]
         )
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
-        games = fetched.filter { state.matches($0) }
+
+        do {
+            let fetched = try modelContext.fetch(descriptor)
+            games = fetched.filter { state.matches($0) }
+        } catch {
+            print("[WeekView] Fetch failed: \(error)")
+        }
     }
 }
 

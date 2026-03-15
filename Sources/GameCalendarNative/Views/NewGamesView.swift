@@ -68,29 +68,33 @@ struct NewGamesView: View {
     }
 
     private func loadGames() async {
-        // First, fetch just 1 game to find the most recent import date
-        var recentDescriptor = FetchDescriptor<GameRelease>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        recentDescriptor.fetchLimit = 1
-        guard let newest = (try? modelContext.fetch(recentDescriptor))?.first else {
-            isLoading = false
-            return
-        }
+        do {
+            // First, fetch just 1 game to find the most recent import date
+            var recentDescriptor = FetchDescriptor<GameRelease>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            recentDescriptor.fetchLimit = 1
+            guard let newest = try modelContext.fetch(recentDescriptor).first else {
+                isLoading = false
+                return
+            }
 
-        // Then fetch only games from that day
-        let cal = Calendar.current
-        let newestDay = cal.startOfDay(for: newest.createdAt)
-        let nextDay = cal.date(byAdding: .day, value: 1, to: newestDay)!
+            // Then fetch only games from that day
+            let cal = Calendar.current
+            let newestDay = cal.startOfDay(for: newest.createdAt)
+            let nextDay = cal.date(byAdding: .day, value: 1, to: newestDay)!
 
-        let predicate = #Predicate<GameRelease> { game in
-            game.createdAt >= newestDay && game.createdAt < nextDay
+            let predicate = #Predicate<GameRelease> { game in
+                game.createdAt >= newestDay && game.createdAt < nextDay
+            }
+            let descriptor = FetchDescriptor<GameRelease>(
+                predicate: predicate,
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            games = try modelContext.fetch(descriptor)
+        } catch {
+            print("[NewGamesView] Fetch failed: \(error)")
         }
-        let descriptor = FetchDescriptor<GameRelease>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        games = (try? modelContext.fetch(descriptor)) ?? []
         isLoading = false
     }
 }
