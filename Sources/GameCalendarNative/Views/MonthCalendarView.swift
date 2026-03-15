@@ -28,8 +28,9 @@ struct MonthCalendarView: View {
 
             Divider()
 
-            // Calendar grid
-            ScrollView {
+            // Calendar grid — fills available height
+            GeometryReader { geo in
+                let rowHeight = max(80, (geo.size.height - 5) / 6)
                 LazyVGrid(columns: columns, spacing: 1) {
                     ForEach(gridDays, id: \.self) { date in
                         DayCell(
@@ -37,6 +38,7 @@ struct MonthCalendarView: View {
                             isCurrentMonth: calendar.isDate(date, equalTo: state.focusDate, toGranularity: .month),
                             isToday: calendar.isDateInToday(date),
                             games: gamesFor(date: date),
+                            cellHeight: rowHeight,
                             onSelect: { state.selectedGame = $0 }
                         )
                     }
@@ -108,19 +110,27 @@ struct DayCell: View {
     let isCurrentMonth: Bool
     let isToday: Bool
     let games: [GameRelease]
+    let cellHeight: CGFloat
     let onSelect: (GameRelease) -> Void
 
-    private let maxVisible = 3
+    private var maxVisible: Int {
+        if cellHeight < 100 { return 2 }
+        if cellHeight < 140 { return 3 }
+        if cellHeight < 200 { return 5 }
+        return 7
+    }
+
+    private var isCompact: Bool { cellHeight < 100 }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: isCompact ? 1 : 2) {
             // Day number
             HStack {
                 Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.caption)
+                    .font(isCompact ? .caption : .callout)
                     .fontWeight(isToday ? .bold : .regular)
                     .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
-                    .frame(width: 22, height: 22)
+                    .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
                     .background(isToday ? Color.accentColor : .clear, in: Circle())
                 Spacer()
             }
@@ -129,21 +139,23 @@ struct DayCell: View {
 
             // Game pills
             ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
-                GamePill(game: game)
+                GamePill(game: game, compact: isCompact)
                     .onTapGesture { onSelect(game) }
             }
 
             // Overflow indicator
             if games.count > maxVisible {
                 Text("+\(games.count - maxVisible) til")
-                    .font(.system(size: 10))
+                    .font(.system(size: isCompact ? 10 : 11))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 2)
         }
-        .frame(maxWidth: .infinity, minHeight: 80, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(height: cellHeight)
+        .clipped()
         .background(isCurrentMonth ? Color(.windowBackgroundColor) : Color(.underPageBackgroundColor))
         .opacity(isCurrentMonth ? 1 : 0.5)
     }
@@ -153,6 +165,10 @@ struct DayCell: View {
 
 struct GamePill: View {
     let game: GameRelease
+    var compact: Bool = false
+
+    private var thumbnailSize: CGFloat { compact ? 14 : 20 }
+    private var fontSize: CGFloat { compact ? 10 : 11 }
 
     var body: some View {
         HStack(spacing: 4) {
@@ -166,21 +182,21 @@ struct GamePill: View {
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "gamecontroller.fill")
-                    .font(.system(size: 7))
+                    .font(.system(size: compact ? 7 : 9))
                     .foregroundStyle(game.title.pillColor.opacity(0.6))
             }
-            .frame(width: 14, height: 14)
+            .frame(width: thumbnailSize, height: thumbnailSize)
             .clipShape(.rect(cornerRadius: 2))
 
             // Title (uppercase to match web)
             Text(game.title)
-                .font(.system(size: 10))
+                .font(.system(size: fontSize))
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .foregroundStyle(.primary)
         }
         .padding(.trailing, 4)
-        .padding(.vertical, 2)
+        .padding(.vertical, compact ? 2 : 3)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.quaternary, in: .rect(cornerRadius: 3))
     }
