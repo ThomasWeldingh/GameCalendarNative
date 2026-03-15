@@ -115,13 +115,13 @@ struct DayCell: View {
 
     private enum CellMode {
         case compact   // < 100pt — thin pills, small text
-        case normal    // 100-159pt — medium pills
-        case expanded  // >= 160pt — mini cards with cover art
+        case normal    // 100-129pt — medium pills
+        case expanded  // >= 130pt — 2-column mini card grid
     }
 
     private var mode: CellMode {
         if cellHeight < 100 { return .compact }
-        if cellHeight < 160 { return .normal }
+        if cellHeight < 130 { return .normal }
         return .expanded
     }
 
@@ -129,16 +129,27 @@ struct DayCell: View {
         switch mode {
         case .compact:  return 2
         case .normal:   return 3
-        case .expanded: return cellHeight < 240 ? 2 : 3
+        case .expanded:
+            // 2-column grid: how many rows fit below the header?
+            // Header ~34pt, each card row ~(coverHeight + titleHeight + spacing)
+            let availableHeight = cellHeight - 38 // header + padding
+            let cardHeight = availableHeight * 0.42 // rough height per card row
+            let rows = max(1, Int(availableHeight / max(cardHeight, 50)))
+            return min(rows * 2, 8)
         }
     }
+
+    private let miniCardColumns = [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: mode == .compact ? 1 : 2) {
             // Day number
             dayHeader
 
-            // Game entries — pills or mini cards depending on mode
+            // Game entries — pills or 2-column mini cards
             if mode == .expanded {
                 miniCardGrid
             } else {
@@ -153,7 +164,7 @@ struct DayCell: View {
                     .padding(.horizontal, 4)
             }
 
-            Spacer(minLength: 2)
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: cellHeight)
@@ -187,10 +198,10 @@ struct DayCell: View {
         }
     }
 
-    // MARK: - Mini card grid (expanded mode)
+    // MARK: - 2-column mini card grid (expanded mode)
 
     private var miniCardGrid: some View {
-        HStack(alignment: .top, spacing: 4) {
+        LazyVGrid(columns: miniCardColumns, alignment: .leading, spacing: 4) {
             ForEach(Array(games.prefix(maxVisible)), id: \.externalId) { game in
                 MiniGameCard(game: game)
                     .onTapGesture { onSelect(game) }
@@ -219,7 +230,7 @@ struct MiniGameCard: View {
                     )
                     .overlay {
                         Text(game.title.prefix(2).uppercased())
-                            .font(.system(size: 11, weight: .heavy))
+                            .font(.system(size: 12, weight: .heavy))
                             .foregroundStyle(.white.opacity(0.7))
                     }
                 }
@@ -230,7 +241,7 @@ struct MiniGameCard: View {
                 // Rating badge
                 if let rating = game.rating {
                     RatingBadge(score: rating)
-                        .scaleEffect(0.7, anchor: .bottomLeading)
+                        .scaleEffect(0.65, anchor: .bottomLeading)
                         .padding(2)
                 }
             }
@@ -238,12 +249,11 @@ struct MiniGameCard: View {
 
             // Title
             Text(game.title)
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 9, weight: .semibold))
                 .lineLimit(2)
                 .lineSpacing(1)
                 .foregroundStyle(.primary)
-                .padding(.top, 3)
-                .padding(.horizontal, 1)
+                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
