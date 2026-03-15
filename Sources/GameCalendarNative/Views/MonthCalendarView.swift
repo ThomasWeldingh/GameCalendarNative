@@ -171,17 +171,25 @@ struct DayCell: View {
     // MARK: - Day header
 
     private var dayHeader: some View {
-        HStack {
-            Text("\(Calendar.current.component(.day, from: date))")
-                .font(isCompact ? .caption : .callout)
-                .fontWeight(isToday ? .bold : .regular)
-                .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
-                .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
-                .background(isToday ? Color.accentColor : .clear, in: Circle())
-            Spacer()
+        VStack(spacing: 0) {
+            HStack {
+                Text("\(Calendar.current.component(.day, from: date))")
+                    .font(isCompact ? .caption : .callout)
+                    .fontWeight(isToday ? .bold : .regular)
+                    .foregroundStyle(isToday ? Color.white : isCurrentMonth ? Color.primary : Color.secondary.opacity(0.4))
+                    .frame(width: isCompact ? 22 : 26, height: isCompact ? 22 : 26)
+                    .background(isToday ? Color.accentColor : .clear, in: Circle())
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+            .padding(.bottom, showCards ? 4 : 0)
+
+            // Separator line in card mode
+            if showCards {
+                Divider()
+            }
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 4)
     }
 
     // MARK: - Pill list
@@ -213,25 +221,27 @@ struct MiniGameCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Cover image (portrait ratio)
+            // Cover image — guaranteed 1:1 square
             ZStack(alignment: .bottomLeading) {
-                AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    LinearGradient(
-                        colors: [game.title.pillColor, game.title.pillColor.opacity(0.5)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                Color.clear
+                    .aspectRatio(1, contentMode: .fit)
                     .overlay {
-                        Text(game.title.prefix(2).uppercased())
-                            .font(.system(size: 12, weight: .heavy))
-                            .foregroundStyle(.white.opacity(0.7))
+                        AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            LinearGradient(
+                                colors: [game.title.pillColor, game.title.pillColor.opacity(0.5)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            .overlay {
+                                Text(game.title.prefix(2).uppercased())
+                                    .font(.system(size: 12, weight: .heavy))
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                        }
                     }
-                }
-                .frame(maxWidth: .infinity)
-                .aspectRatio(1.0, contentMode: .fit)
-                .clipped()
+                    .clipped()
 
                 // Rating badge
                 if let rating = game.rating {
