@@ -13,12 +13,20 @@ struct GameDetailSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Query private var wishlistEntries: [WishlistEntry]
+    @Query private var steamPrices: [SteamPrice]
 
     @State private var lightboxIndex: Int? = nil
     @State private var activeVideoId: String? = nil
+    @State private var showAddToList = false
+    @State private var similarGames: [GameRelease] = []
 
     private var isWishlisted: Bool {
         wishlistEntries.contains { $0.game.externalId == game.externalId }
+    }
+
+    private var steamPrice: SteamPrice? {
+        guard let steamId = game.steamAppId else { return nil }
+        return steamPrices.first { $0.steamAppId == steamId }
     }
 
     private func toggleWishlist() {
@@ -33,6 +41,33 @@ struct GameDetailSheet: View {
 
     private func close() {
         state.selectedGame = nil
+    }
+
+    private func shareGame() {
+        var text = game.title
+        if let date = game.releaseDate {
+            text += " — \(date.formatted(date: .long, time: .omitted))"
+        }
+        if !game.platforms.isEmpty {
+            text += " (\(game.platforms.joined(separator: ", ")))"
+        }
+        if let url = game.websiteUrl {
+            text += "\n\(url)"
+        }
+
+        #if os(macOS)
+        let picker = NSSharingServicePicker(items: [text as NSString])
+        if let window = NSApp.keyWindow, let contentView = window.contentView {
+            picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+        }
+        #else
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            rootVC.present(activityVC, animated: true)
+        }
+        #endif
     }
 
     var body: some View {
@@ -71,6 +106,16 @@ struct GameDetailSheet: View {
                             screenshotSection
                         }
 
+                        // Steam news (if available)
+                        if game.steamAppId != nil {
+                            SteamNewsSection(steamAppId: game.steamAppId!)
+                        }
+
+                        // Similar games
+                        if !similarGames.isEmpty {
+                            similarGamesSection
+                        }
+
                         // Action buttons (website only)
                         actionButtons
                     }
@@ -89,6 +134,20 @@ struct GameDetailSheet: View {
                     onClose: { lightboxIndex = nil }
                 )
             }
+        }
+        .task(id: game.externalId) {
+            guard !game.similarGameIds.isEmpty else { return }
+            var results: [GameRelease] = []
+            for id in game.similarGameIds.prefix(12) {
+                let extId = String(id)
+                let predicate = #Predicate<GameRelease> { $0.externalId == extId }
+                var descriptor = FetchDescriptor(predicate: predicate)
+                descriptor.fetchLimit = 1
+                if let g = try? modelContext.fetch(descriptor).first {
+                    results.append(g)
+                }
+            }
+            similarGames = results
         }
         .onKeyPress(.escape) {
             // Don't close the modal if a YouTube video is playing —
@@ -116,7 +175,28 @@ struct GameDetailSheet: View {
                     .foregroundStyle(isWishlisted ? .red : .primary)
             }
             .buttonStyle(.plain)
-            .help(isWishlisted ? "Fjern fra ønskeliste" : "Legg til ønskeliste")
+            .help(isWishlisted ? String(localized: "Fjern fra ønskeliste") : String(localized: "Legg til ønskeliste"))
+
+            // Add to list
+            Button { showAddToList.toggle() } label: {
+                Image(systemName: "list.bullet.rectangle")
+                    .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            .help("Legg til i liste")
+            #if os(macOS)
+            .popover(isPresented: $showAddToList, arrowEdge: .bottom) {
+                AddToListPopover(game: game)
+            }
+            #endif
+
+            // Share
+            Button { shareGame() } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            .help("Del spill")
 
             // Calendar export
             if game.releaseDate != nil {
@@ -220,6 +300,16 @@ struct GameDetailSheet: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+
+            // Steam price
+            if let price = steamPrice {
+                HStack(spacing: 8) {
+                    Image(systemName: "tag.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    SteamPriceLabel(price: price)
                 }
             }
 
@@ -378,6 +468,49 @@ struct GameDetailSheet: View {
         }
     }
 
+    // MARK: - Similar games
+
+    private var similarGamesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Lignende spill")
+                .font(.headline)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(similarGames, id: \.externalId) { similar in
+                        Button {
+                            state.selectedGame = similar
+                        } label: {
+                            VStack(spacing: 6) {
+                                AsyncImage(url: URL(string: similar.coverImageUrl ?? "")) { image in
+                                    image.resizable().aspectRatio(3/4, contentMode: .fill)
+                                } placeholder: {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(similar.title.pillColor.opacity(0.2))
+                                        .overlay {
+                                            Text(similar.title.prefix(2).uppercased())
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundStyle(similar.title.pillColor.opacity(0.4))
+                                        }
+                                }
+                                .frame(width: 80, height: 107)
+                                .clipShape(.rect(cornerRadius: 6))
+
+                                Text(similar.title)
+                                    .font(.caption2)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.center)
+                                    .frame(width: 80)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - ICS export
 
     private func exportSingleIcs() {
@@ -402,5 +535,76 @@ struct GameDetailSheet: View {
             rootVC.present(activityVC, animated: true)
         }
         #endif
+    }
+}
+
+// MARK: - Steam News section
+
+struct SteamNewsSection: View {
+    let steamAppId: String
+    @State private var newsItems: [SteamNewsService.NewsItem] = []
+    @State private var isLoading = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if isLoading {
+                HStack {
+                    Text("Nyheter")
+                        .font(.headline)
+                    Spacer()
+                    ProgressView().controlSize(.small)
+                }
+                .padding(.top, 8)
+            } else if !newsItems.isEmpty {
+                Text("Nyheter")
+                    .font(.headline)
+                    .padding(.top, 8)
+
+                ForEach(newsItems) { item in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(item.title)
+                                .font(.callout)
+                                .fontWeight(.medium)
+                                .lineLimit(2)
+                            Spacer()
+                            Text(item.dateFormatted, style: .relative)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Text(item.cleanContents)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(3)
+
+                        if let feedLabel = item.feedlabel {
+                            Text(feedLabel)
+                                .font(.system(size: 9))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.quaternary, in: Capsule())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(10)
+                    .background(.quaternary.opacity(0.5), in: .rect(cornerRadius: 8))
+                    .onTapGesture {
+                        if let url = URL(string: item.url) {
+                            #if os(macOS)
+                            NSWorkspace.shared.open(url)
+                            #else
+                            UIApplication.shared.open(url)
+                            #endif
+                        }
+                    }
+                }
+            }
+        }
+        .task {
+            isLoading = true
+            newsItems = await SteamNewsService.shared.fetchNews(steamAppId: steamAppId, count: 3)
+            isLoading = false
+        }
     }
 }

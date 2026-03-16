@@ -56,7 +56,7 @@ struct CalendarNavigationBar: View {
                             .foregroundStyle(Color.accentColor)
                     }
                     .buttonStyle(.plain)
-                    .help(state.monthCardLayout ? "Vis som liste" : "Vis som kort")
+                    .help(state.monthCardLayout ? String(localized: "Vis som liste") : String(localized: "Vis som kort"))
                 }
 
                 Spacer()

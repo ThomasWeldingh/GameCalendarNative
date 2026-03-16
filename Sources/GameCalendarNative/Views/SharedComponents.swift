@@ -45,6 +45,7 @@ struct HeartOverlayButton: View {
                 .background(.ultraThinMaterial, in: Circle())
         }
         .buttonStyle(.plain)
+        .help(wishlisted ? String(localized: "Fjern fra ønskeliste") : String(localized: "Legg til ønskeliste"))
         .onAppear { wishlisted = !game.wishlistEntries.isEmpty }
         .onChange(of: game.wishlistEntries.count) { _, newCount in
             wishlisted = newCount > 0
@@ -227,7 +228,7 @@ struct ICSExporter {
             "BEGIN:VCALENDAR",
             "VERSION:2.0",
             "PRODID:-//GameCalendar//Wishlist//EN",
-            "X-WR-CALNAME:Spillønskeliste",
+            "X-WR-CALNAME:\(String(localized: "Spillønskeliste"))",
         ]
         cal.append(contentsOf: events)
         cal.append("END:VCALENDAR")
@@ -382,12 +383,10 @@ struct ScreenshotLightbox: View {
 
     private func toggleFullscreen() {
         #if os(macOS)
-        // The lightbox is inside a sheet (NSPanel) which doesn't support fullscreen.
-        // Toggle the parent window that presented the sheet instead.
-        if let sheetParent = NSApp.keyWindow?.sheetParent {
-            sheetParent.toggleFullScreen(nil)
-        } else if let mainWindow = NSApp.mainWindow {
-            mainWindow.toggleFullScreen(nil)
+        // The lightbox lives inside a SwiftUI overlay, so NSApp.keyWindow
+        // and .mainWindow may not resolve correctly. Find the visible main window.
+        if let window = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }) {
+            window.toggleFullScreen(nil)
         }
         #endif
     }

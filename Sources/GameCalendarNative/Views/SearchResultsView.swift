@@ -92,21 +92,160 @@ struct SearchResultsView: View {
     @State private var results: [GameRelease] = []
     @State private var isSearching = false
 
+    // Search-specific filters
+    @State private var searchPlatform: String? = nil
+    @State private var searchGenre: String? = nil
+    @State private var searchMinRating: Double? = nil
+
+    private static let quickPlatforms = ["PC", "PlayStation", "Xbox", "Switch"]
+    private static let quickGenres = ["Action", "RPG", "Adventure", "Shooter", "Strategy", "Simulation"]
+    private static let ratingOptions: [(label: String, value: Double)] = [
+        ("70+", 70), ("80+", 80), ("90+", 90)
+    ]
+
+    private var filteredResults: [GameRelease] {
+        results.filter { game in
+            if let platform = searchPlatform,
+               !game.platforms.contains(where: { $0.localizedCaseInsensitiveContains(platform) }) {
+                return false
+            }
+            if let genre = searchGenre,
+               !game.genres.contains(genre) {
+                return false
+            }
+            if let minRating = searchMinRating,
+               (game.rating ?? 0) < minRating {
+                return false
+            }
+            return true
+        }
+    }
+
+    private var hasActiveFilters: Bool {
+        searchPlatform != nil || searchGenre != nil || searchMinRating != nil
+    }
+
     var body: some View {
-        Group {
-            if isSearching {
-                ProgressView("Søker...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if results.isEmpty && query.count >= 2 {
-                ContentUnavailableView.search(text: query)
-            } else {
-                List(results, id: \.externalId) { game in
-                    SearchResultRow(game: game)
-                        .onTapGesture { state.selectedGame = game }
+        VStack(spacing: 0) {
+            // Search filter chips
+            if !results.isEmpty || hasActiveFilters {
+                searchFilterBar
+            }
+
+            // Results
+            Group {
+                if isSearching {
+                    ProgressView("Søker...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if filteredResults.isEmpty && query.count >= 2 {
+                    if hasActiveFilters {
+                        ContentUnavailableView(
+                            "Ingen treff med valgte filtre",
+                            systemImage: "line.3.horizontal.decrease.circle",
+                            description: Text("Prøv å fjerne noen filtre")
+                        )
+                    } else {
+                        ContentUnavailableView.search(text: query)
+                    }
+                } else {
+                    List(filteredResults, id: \.externalId) { game in
+                        SearchResultRow(game: game)
+                            .onTapGesture { state.selectedGame = game }
+                    }
                 }
             }
         }
         .task(id: query) { await search() }
+    }
+
+    // MARK: - Search filter bar
+
+    private var searchFilterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                // Clear all filters
+                if hasActiveFilters {
+                    Button {
+                        searchPlatform = nil
+                        searchGenre = nil
+                        searchMinRating = nil
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 9))
+                            Text("Nullstill")
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color.red.opacity(0.15), in: Capsule())
+                        .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+
+                    Divider().frame(height: 20)
+                }
+
+                // Platform chips
+                ForEach(Self.quickPlatforms, id: \.self) { platform in
+                    searchChip(
+                        label: platform,
+                        isActive: searchPlatform == platform
+                    ) {
+                        searchPlatform = searchPlatform == platform ? nil : platform
+                    }
+                }
+
+                Divider().frame(height: 20)
+
+                // Genre chips
+                ForEach(Self.quickGenres, id: \.self) { genre in
+                    searchChip(
+                        label: genre,
+                        isActive: searchGenre == genre
+                    ) {
+                        searchGenre = searchGenre == genre ? nil : genre
+                    }
+                }
+
+                Divider().frame(height: 20)
+
+                // Rating chips
+                ForEach(Self.ratingOptions, id: \.value) { option in
+                    searchChip(
+                        label: "⭐ \(option.label)",
+                        isActive: searchMinRating == option.value
+                    ) {
+                        searchMinRating = searchMinRating == option.value ? nil : option.value
+                    }
+                }
+
+                // Result count
+                Text("\(filteredResults.count) treff")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 8)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+        }
+        .background(.bar)
+    }
+
+    private func searchChip(label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption)
+                .fontWeight(isActive ? .semibold : .regular)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(
+                    isActive ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1),
+                    in: Capsule()
+                )
+                .foregroundStyle(isActive ? Color.accentColor : .primary)
+        }
+        .buttonStyle(.plain)
     }
 
     private func search() async {
@@ -241,6 +380,7 @@ struct SearchResultRow: View {
                     Text("\(game.popularity)").font(.caption)
                 }
                 .foregroundStyle(.orange)
+                .help("Popularitet — antall vurderinger")
             }
         }
         .padding(.vertical, 4)

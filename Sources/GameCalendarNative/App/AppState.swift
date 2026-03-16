@@ -2,24 +2,56 @@ import Foundation
 import SwiftUI
 import SwiftData
 
-enum ViewType: String, CaseIterable {
-    case month, week, day, tba, wishlist, new
+// MARK: - Theme mode
+
+enum ThemeMode: String, CaseIterable {
+    case system, light, dark
 
     var label: String {
         switch self {
-        case .month:    return "Måned"
-        case .week:     return "Uke"
-        case .day:      return "Dag"
-        case .tba:      return "Kommende"
-        case .wishlist: return "Ønskeliste"
-        case .new:      return "Nylig lagt til"
+        case .system: return String(localized: "System")
+        case .light:  return String(localized: "Lys")
+        case .dark:   return String(localized: "Mørk")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light:  return "sun.max.fill"
+        case .dark:   return "moon.fill"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light:  return .light
+        case .dark:   return .dark
+        }
+    }
+}
+
+enum ViewType: String, CaseIterable {
+    case month, week, day, tba, wishlist, lists, new
+
+    var label: String {
+        switch self {
+        case .month:    return String(localized: "Måned")
+        case .week:     return String(localized: "Uke")
+        case .day:      return String(localized: "Dag")
+        case .tba:      return String(localized: "Kommende")
+        case .wishlist: return String(localized: "Ønskeliste")
+        case .lists:    return String(localized: "Lister")
+        case .new:      return String(localized: "Nylig lagt til")
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .new:      return "Nylig"
-        case .wishlist: return "Ønskeliste"
+        case .new:      return String(localized: "Nylig")
+        case .wishlist: return String(localized: "Ønskeliste")
+        case .lists:    return String(localized: "Lister")
         default: return label
         }
     }
@@ -31,6 +63,7 @@ enum ViewType: String, CaseIterable {
         case .day:      return "calendar.badge.clock"
         case .tba:      return "questionmark.circle"
         case .wishlist: return "heart.fill"
+        case .lists:    return "list.bullet.rectangle"
         case .new:      return "sparkles"
         }
     }
@@ -38,17 +71,23 @@ enum ViewType: String, CaseIterable {
     var isCalendarMode: Bool {
         switch self {
         case .month, .week, .day: return true
-        case .tba, .wishlist, .new: return false
+        case .tba, .wishlist, .lists, .new: return false
         }
     }
 
     static var calendarModes: [ViewType] { [.month, .week, .day] }
-    static var sectionTabs: [ViewType] { [.tba, .wishlist, .new] }
+    static var sectionTabs: [ViewType] { [.tba, .wishlist, .lists, .new] }
 }
 
 @Observable
 @MainActor
 class AppState {
+    // Onboarding
+    var hasCompletedOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasCompletedOnboarding") }
+    }
+
     // Navigation
     var viewType: ViewType = .month
     var lastCalendarMode: ViewType = .month
@@ -62,6 +101,39 @@ class AppState {
     var monthCardLayout: Bool = false {
         didSet { UserDefaults.standard.set(monthCardLayout, forKey: "monthCardLayout") }
     }
+
+    // Theme (persisted)
+    var themeMode: ThemeMode = .system {
+        didSet { UserDefaults.standard.set(themeMode.rawValue, forKey: "themeMode") }
+    }
+    var accentColorName: String = "blue" {
+        didSet { UserDefaults.standard.set(accentColorName, forKey: "accentColorName") }
+    }
+
+    var accentColor: Color {
+        switch accentColorName {
+        case "blue":   return .blue
+        case "purple": return .purple
+        case "green":  return .green
+        case "orange": return .orange
+        case "red":    return .red
+        case "pink":   return .pink
+        case "teal":   return .teal
+        case "indigo": return .indigo
+        default:       return .blue
+        }
+    }
+
+    static let accentColorOptions: [(name: String, color: Color, label: String)] = [
+        ("blue", .blue, String(localized: "Blå")),
+        ("purple", .purple, String(localized: "Lilla")),
+        ("green", .green, String(localized: "Grønn")),
+        ("orange", .orange, String(localized: "Oransje")),
+        ("red", .red, String(localized: "Rød")),
+        ("pink", .pink, String(localized: "Rosa")),
+        ("teal", .teal, String(localized: "Turkis")),
+        ("indigo", .indigo, String(localized: "Indigo")),
+    ]
 
     // Filters (persisted to UserDefaults)
     var activePlatforms: Set<String> = [] {
@@ -132,6 +204,13 @@ class AppState {
             showIndie = defaults.bool(forKey: "showIndie")
         }
         monthCardLayout = defaults.bool(forKey: "monthCardLayout")
+        if let themeRaw = defaults.string(forKey: "themeMode"),
+           let mode = ThemeMode(rawValue: themeRaw) {
+            themeMode = mode
+        }
+        if let colorName = defaults.string(forKey: "accentColorName") {
+            accentColorName = colorName
+        }
     }
 
     // MARK: - Navigation
@@ -260,7 +339,7 @@ class AppState {
         var result: ImportResult?
 
         // Try backend API first (fast: 2 HTTP requests)
-        importPhase = "Synkroniserer fra API..."
+        importPhase = String(localized: "Synkroniserer fra API...")
         let apiClient = ApiSyncClient(baseURL: apiBaseURL)
         let actor = ImportActor(modelContainer: container)
         do {
@@ -268,7 +347,7 @@ class AppState {
         } catch {
             // API failed — fall back to IGDB
             guard let creds = KeychainService.credentials else {
-                importError = "Backend API utilgjengelig og IGDB-nøkler mangler"
+                importError = String(localized: "Backend API utilgjengelig og IGDB-nøkler mangler")
                 return
             }
 
@@ -276,7 +355,7 @@ class AppState {
             let igdbClient = IgdbClient(credentials: creds, tokenService: tokenService)
             let igdbActor = ImportActor(modelContainer: container)
 
-            importPhase = "Henter nylige spill fra IGDB..."
+            importPhase = String(localized: "Henter nylige spill fra IGDB...")
             do {
                 result = try await igdbActor.runIgdbProgressive(client: igdbClient)
             } catch {

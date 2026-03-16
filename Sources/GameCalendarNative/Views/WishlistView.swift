@@ -11,8 +11,14 @@ struct WishlistView: View {
     let state: AppState
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WishlistEntry.addedAt, order: .reverse) private var entries: [WishlistEntry]
+    @Query private var steamPrices: [SteamPrice]
 
     private let columns = [GridItem(.adaptive(minimum: 130, maximum: 220), spacing: 16)]
+
+    private func price(for game: GameRelease) -> SteamPrice? {
+        guard let steamId = game.steamAppId else { return nil }
+        return steamPrices.first { $0.steamAppId == steamId }
+    }
 
     private var availableNowGames: [GameRelease] {
         let today = Calendar.current.startOfDay(for: Date())
@@ -106,6 +112,18 @@ struct WishlistView: View {
 
                                 Spacer()
 
+                                // Share wishlist
+                                Button { shareWishlist() } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.caption)
+                                        Text("Del")
+                                            .font(.caption)
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+
                                 if datedCount > 0 {
                                     Button {
                                         exportIcs()
@@ -126,7 +144,7 @@ struct WishlistView: View {
                             // All wishlisted games grid
                             LazyVGrid(columns: columns, spacing: 16) {
                                 ForEach(entries) { entry in
-                                    WishlistCard(game: entry.game, onRemove: { remove(entry) })
+                                    WishlistCard(game: entry.game, steamPrice: price(for: entry.game), onRemove: { remove(entry) })
                                         .onTapGesture { state.selectedGame = entry.game }
                                 }
                             }
@@ -134,6 +152,9 @@ struct WishlistView: View {
                         }
                     }
                     .padding(.vertical, 20)
+                }
+                .task {
+                    await SteamPriceService.shared.fetchPricesForWishlist(container: modelContext.container)
                 }
             }
         }
@@ -143,6 +164,35 @@ struct WishlistView: View {
         let externalId = entry.game.externalId
         modelContext.delete(entry)
         Task { await NotificationService.shared.removeAllNotifications(for: externalId) }
+    }
+
+    private func shareWishlist() {
+        var lines = [String(localized: "🎮 Min spillønskeliste:\n")]
+        for entry in entries {
+            let game = entry.game
+            var line = "• \(game.title)"
+            if let date = game.releaseDate {
+                line += " — \(date.formatted(.dateTime.day().month(.abbreviated).year()))"
+            } else {
+                line += " — TBA"
+            }
+            lines.append(line)
+        }
+        let text = lines.joined(separator: "\n")
+
+        #if os(macOS)
+        let picker = NSSharingServicePicker(items: [text as NSString])
+        if let window = NSApp.keyWindow, let contentView = window.contentView {
+            picker.show(relativeTo: .zero, of: contentView, preferredEdge: .minY)
+        }
+        #else
+        let activityVC = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            rootVC.present(activityVC, animated: true)
+        }
+        #endif
     }
 
     private func exportIcs() {
@@ -175,6 +225,7 @@ struct WishlistView: View {
 
 struct WishlistCard: View {
     let game: GameRelease
+    var steamPrice: SteamPrice? = nil
     let onRemove: () -> Void
 
     var body: some View {
@@ -237,6 +288,59 @@ struct WishlistCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            // Countdown
+            if let countdown = UpcomingWishlistCard.countdownText(for: game.releaseDate) {
+                Text(countdown.text)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(countdown.isImminent ? .white : Color.accentColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        countdown.isImminent ? Color.accentColor : Color.accentColor.opacity(0.15),
+                        in: Capsule()
+                    )
+            }
+
+            // Steam price
+            if let price = steamPrice {
+                SteamPriceLabel(price: price)
+            }
+        }
+    }
+}
+
+// MARK: - Steam price label
+
+struct SteamPriceLabel: View {
+    let price: SteamPrice
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if price.isFree {
+                Text("Gratis")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.green)
+            } else {
+                if let usd = price.formattedUsd {
+                    Text(usd)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.primary)
+                }
+                if let nok = price.formattedNok {
+                    Text(nok)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+                if price.discountPercent > 0 {
+                    Text("-\(price.discountPercent)%")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(.green, in: .rect(cornerRadius: 3))
+                }
+            }
         }
     }
 }
@@ -274,6 +378,32 @@ struct UpcomingWishlistCard: View {
                     .font(.system(size: 10))
                     .foregroundStyle(Color.accentColor)
             }
+
+            // Countdown
+            if let countdown = Self.countdownText(for: game.releaseDate) {
+                Text(countdown.text)
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(countdown.isImminent ? .white : Color.accentColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        countdown.isImminent ? Color.accentColor : Color.accentColor.opacity(0.15),
+                        in: Capsule()
+                    )
+            }
+        }
+    }
+
+    static func countdownText(for date: Date?) -> (text: String, isImminent: Bool)? {
+        guard let date = date else { return nil }
+        let today = Calendar.current.startOfDay(for: Date())
+        let releaseDay = Calendar.current.startOfDay(for: date)
+        guard releaseDay >= today else { return nil }
+        let days = Calendar.current.dateComponents([.day], from: today, to: releaseDay).day ?? 0
+        switch days {
+        case 0: return (String(localized: "I dag!"), true)
+        case 1: return (String(localized: "I morgen!"), true)
+        default: return (String(localized: "om \(days) dager"), days <= 7)
         }
     }
 }

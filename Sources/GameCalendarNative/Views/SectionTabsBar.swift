@@ -20,9 +20,8 @@ struct SectionTabsBar: View {
             HStack(spacing: 2) {
                 sectionButton(for: .tba)
                 wishlistButton
-                if state.viewType.isCalendarMode || state.viewType == .new {
-                    sectionButton(for: .new)
-                }
+                sectionButton(for: .lists)
+                sectionButton(for: .new)
                 Spacer()
             }
 
@@ -191,23 +190,100 @@ struct SectionTabsBar: View {
         .help("Innstillinger")
         #if os(macOS)
         .popover(isPresented: $showSettings, arrowEdge: .bottom) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text("Innstillinger")
                     .font(.headline)
 
+                // Theme mode
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Utseende")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+
+                    HStack(spacing: 6) {
+                        ForEach(ThemeMode.allCases, id: \.self) { mode in
+                            Button {
+                                state.themeMode = mode
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: mode.icon)
+                                        .font(.system(size: 10))
+                                    Text(mode.label)
+                                        .font(.caption)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(
+                                    state.themeMode == mode ? Color.accentColor.opacity(0.2) : Color.clear,
+                                    in: .rect(cornerRadius: 6)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(
+                                            state.themeMode == mode ? Color.accentColor : Color.secondary.opacity(0.3),
+                                            lineWidth: 1
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                // Accent color
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Aksentfarge")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+
+                    HStack(spacing: 8) {
+                        ForEach(AppState.accentColorOptions, id: \.name) { option in
+                            Button {
+                                state.accentColorName = option.name
+                            } label: {
+                                Circle()
+                                    .fill(option.color)
+                                    .frame(width: 24, height: 24)
+                                    .overlay {
+                                        if state.accentColorName == option.name {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundStyle(.white)
+                                        }
+                                    }
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                state.accentColorName == option.name ? option.color : .clear,
+                                                lineWidth: 2
+                                            )
+                                            .padding(-3)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .help(option.label)
+                        }
+                    }
+                }
+
+                Divider()
+
+                // Notifications toggle
                 Toggle("Varsler for ønskeliste", isOn: $notificationsEnabled)
                     .onChange(of: notificationsEnabled) { _, enabled in
                         UserDefaults.standard.set(enabled, forKey: "notificationsEnabled")
                         if enabled {
                             Task {
                                 let granted = await NotificationService.shared.requestPermission()
-                                if !granted {
-                                    notificationsEnabled = false
-                                    UserDefaults.standard.set(false, forKey: "notificationsEnabled")
-                                } else {
+                                if granted {
                                     let games = wishlistEntries.map(\.game)
                                     await NotificationService.shared.rescheduleAll(wishlistedGames: games)
                                 }
+                                // Keep the toggle on regardless — preference is saved
                             }
                         } else {
                             NotificationService.shared.removeAll()
@@ -220,7 +296,7 @@ struct SectionTabsBar: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding()
-            .frame(width: 280)
+            .frame(width: 320)
         }
         #endif
     }

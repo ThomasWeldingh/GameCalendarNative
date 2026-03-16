@@ -17,9 +17,11 @@ final class GameRelease {
     var developer: String?
     var publisher: String?
     var websiteUrl: String?
+    var steamAppId: String?
     var popularity: Int
     var rating: Double?
     var themeIds: [Int]
+    var similarGameIds: [Int] = []
     var createdAt: Date
     var updatedAt: Date
 
@@ -41,9 +43,11 @@ final class GameRelease {
         developer: String? = nil,
         publisher: String? = nil,
         websiteUrl: String? = nil,
+        steamAppId: String? = nil,
         popularity: Int = 0,
         rating: Double? = nil,
-        themeIds: [Int] = []
+        themeIds: [Int] = [],
+        similarGameIds: [Int] = []
     ) {
         self.externalId = externalId
         self.title = title
@@ -59,9 +63,11 @@ final class GameRelease {
         self.developer = developer
         self.publisher = publisher
         self.websiteUrl = websiteUrl
+        self.steamAppId = steamAppId
         self.popularity = popularity
         self.rating = rating
         self.themeIds = themeIds
+        self.similarGameIds = similarGameIds
         self.createdAt = Date()
         self.updatedAt = Date()
     }

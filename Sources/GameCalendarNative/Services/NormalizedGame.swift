@@ -22,7 +22,9 @@ struct NormalizedGame {
     let developer: String?
     let publisher: String?
     let websiteUrl: String?
+    let steamAppId: String?
     let themeIds: [Int]
+    let similarGameIds: [Int]
 
     var contentHash: String {
         let digest = SHA256.hash(data: Data(contentJson.utf8))
@@ -45,9 +47,11 @@ struct NormalizedGame {
             developer: developer,
             publisher: publisher,
             websiteUrl: websiteUrl,
+            steamAppId: steamAppId,
             popularity: popularity,
             rating: rating,
-            themeIds: themeIds
+            themeIds: themeIds,
+            similarGameIds: similarGameIds
         )
     }
 
@@ -65,9 +69,11 @@ struct NormalizedGame {
         game.developer = developer
         game.publisher = publisher
         game.websiteUrl = websiteUrl
+        game.steamAppId = steamAppId
         game.popularity = popularity
         game.rating = rating
         game.themeIds = themeIds
+        game.similarGameIds = similarGameIds
         game.updatedAt = Date()
     }
 }

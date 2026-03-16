@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A90D9"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="header" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="controller" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App icon rounded rect background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <!-- Calendar body -->
+  <rect x="142" y="180" width="740" height="580" rx="48" fill="white" opacity="0.95"/>
+
+  <!-- Calendar header bar -->
+  <rect x="142" y="180" width="740" height="130" rx="48" fill="url(#header)"/>
+  <rect x="142" y="260" width="740" height="50" fill="url(#header)"/>
+
+  <!-- Calendar rings -->
+  <rect x="310" y="148" width="36" height="80" rx="18" fill="#1E3A5F"/>
+  <rect x="678" y="148" width="36" height="80" rx="18" fill="#1E3A5F"/>
+
+  <!-- Month text -->
+  <text x="512" y="265" text-anchor="middle" font-family="-apple-system, SF Pro Display, Helvetica Neue, sans-serif" font-size="72" font-weight="700" fill="white" letter-spacing="2">MARS 2026</text>
+
+  <!-- Day header row -->
+  <g font-family="-apple-system, SF Pro Display, Helvetica Neue, sans-serif" font-size="32" font-weight="600" fill="#94A3B8" text-anchor="middle">
+    <text x="222" y="360">M</text>
+    <text x="325" y="360">T</text>
+    <text x="428" y="360">O</text>
+    <text x="512" y="360">T</text>
+    <text x="596" y="360">F</text>
+    <text x="699" y="360">L</text>
+    <text x="802" y="360">S</text>
+  </g>
+
+  <!-- Calendar grid - row 1 -->
+  <g font-family="-apple-system, SF Pro Display, Helvetica Neue, sans-serif" font-size="38" fill="#334155" text-anchor="middle">
+    <!-- Row 1 -->
+    <text x="596" y="430" font-weight="400">1</text>
+    <text x="699" y="430" font-weight="400">2</text>
+    <text x="802" y="430" font-weight="400">3</text>
+    <!-- Row 2 -->
+    <text x="222" y="500" font-weight="400">4</text>
+    <text x="325" y="500" font-weight="400">5</text>
+    <text x="428" y="500" font-weight="400">6</text>
+    <text x="512" y="500" font-weight="400">7</text>
+    <text x="596" y="500" font-weight="400">8</text>
+    <text x="699" y="500" font-weight="400">9</text>
+    <text x="802" y="500" font-weight="400">10</text>
+  </g>
+
+  <!-- Highlight "today" circle on the 7th -->
+  <circle cx="512" cy="490" r="30" fill="#2563EB" opacity="0.9"/>
+  <text x="512" y="502" text-anchor="middle" font-family="-apple-system, SF Pro Display, Helvetica Neue, sans-serif" font-size="38" font-weight="700" fill="white">7</text>
+
+  <!-- Game controller overlay (bottom-right area) -->
+  <g transform="translate(540, 530)">
+    <!-- Controller body -->
+    <ellipse cx="200" cy="110" rx="190" ry="100" fill="url(#controller)" stroke="#CBD5E1" stroke-width="4"/>
+
+    <!-- Left grip -->
+    <ellipse cx="70" cy="150" rx="55" ry="70" fill="url(#controller)" stroke="#CBD5E1" stroke-width="4"/>
+
+    <!-- Right grip -->
+    <ellipse cx="330" cy="150" rx="55" ry="70" fill="url(#controller)" stroke="#CBD5E1" stroke-width="4"/>
+
+    <!-- D-pad -->
+    <rect x="52" y="80" width="36" height="60" rx="6" fill="#64748B"/>
+    <rect x="40" y="92" width="60" height="36" rx="6" fill="#64748B"/>
+
+    <!-- Face buttons -->
+    <circle cx="300" cy="85" r="14" fill="#EF4444"/>
+    <circle cx="336" cy="110" r="14" fill="#3B82F6"/>
+    <circle cx="264" cy="110" r="14" fill="#EAB308"/>
+    <circle cx="300" cy="135" r="14" fill="#22C55E"/>
+
+    <!-- Center buttons -->
+    <rect x="160" y="95" width="30" height="14" rx="4" fill="#94A3B8"/>
+    <rect x="210" y="95" width="30" height="14" rx="4" fill="#94A3B8"/>
+
+    <!-- Analog sticks -->
+    <circle cx="120" cy="140" r="20" fill="#475569" opacity="0.6"/>
+    <circle cx="260" cy="160" r="20" fill="#475569" opacity="0.6"/>
+  </g>
+</svg>

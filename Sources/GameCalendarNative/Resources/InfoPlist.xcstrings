@@ -1,0 +1,18 @@
+{
+  "sourceLanguage" : "nb",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : {
+        "nb" : { "stringUnit" : { "state" : "translated", "value" : "Spillkalender" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Game Calendar" } }
+      }
+    },
+    "CFBundleName" : {
+      "localizations" : {
+        "nb" : { "stringUnit" : { "state" : "translated", "value" : "Spillkalender" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Game Calendar" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

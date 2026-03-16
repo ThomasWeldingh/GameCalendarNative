@@ -8,14 +8,17 @@ struct MonthCalendarView: View {
     @State private var gamesByDay: [Int: [GameRelease]] = [:]
 
     private let calendar = Calendar.current
-    private let dayHeaders = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
+    private static let dayHeaders: [String] = [
+        String(localized: "Man"), String(localized: "Tir"), String(localized: "Ons"),
+        String(localized: "Tor"), String(localized: "Fre"), String(localized: "Lør"), String(localized: "Søn")
+    ]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 1), count: 7)
 
     var body: some View {
         VStack(spacing: 0) {
             // Day-of-week headers
             LazyVGrid(columns: columns, spacing: 1) {
-                ForEach(dayHeaders, id: \.self) { day in
+                ForEach(Self.dayHeaders, id: \.self) { day in
                     Text(day)
                         .font(.caption)
                         .fontWeight(.semibold)
@@ -178,7 +181,11 @@ struct DayCell: View {
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: cellHeight)
         .clipped()
+        #if os(macOS)
         .background(isCurrentMonth ? Color(.windowBackgroundColor) : Color(.underPageBackgroundColor))
+        #else
+        .background(isCurrentMonth ? Color(.systemBackground) : Color(.secondarySystemBackground))
+        #endif
         .opacity(isCurrentMonth ? 1 : 0.5)
     }
 

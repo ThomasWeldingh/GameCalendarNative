@@ -61,6 +61,16 @@ struct MainView: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: state.selectedGame?.externalId)
+        .onKeyPress(.leftArrow) {
+            guard state.selectedGame == nil, state.viewType.isCalendarMode else { return .ignored }
+            state.navigateBack()
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            guard state.selectedGame == nil, state.viewType.isCalendarMode else { return .ignored }
+            state.navigateForward()
+            return .handled
+        }
     }
 
     // MARK: - iOS layout
@@ -126,6 +136,7 @@ struct MainView: View {
         case .day:      DayView(state: state)
         case .tba:      TbaView(state: state)
         case .wishlist: WishlistView(state: state)
+        case .lists:    GameListsView(state: state)
         case .new:      NewGamesView(state: state)
         }
     }
@@ -189,6 +200,9 @@ struct MainView: View {
             WishlistView(state: state)
                 .opacity(state.viewType == .wishlist ? 1 : 0)
                 .allowsHitTesting(state.viewType == .wishlist)
+            GameListsView(state: state)
+                .opacity(state.viewType == .lists ? 1 : 0)
+                .allowsHitTesting(state.viewType == .lists)
             NewGamesView(state: state)
                 .opacity(state.viewType == .new ? 1 : 0)
                 .allowsHitTesting(state.viewType == .new)

@@ -101,8 +101,20 @@ extension ApiCalendarItem {
             developer: developer,
             publisher: publisher,
             websiteUrl: websiteUrl,
-            themeIds: []
+            steamAppId: Self.extractSteamAppId(from: websiteUrl),
+            themeIds: [],
+            similarGameIds: []
         )
+    }
+
+    /// Extract Steam App ID from a website URL if it's a Steam store link
+    static func extractSteamAppId(from url: String?) -> String? {
+        guard let url, url.contains("steampowered.com") else { return nil }
+        let parts = url.components(separatedBy: "/")
+        guard let appIndex = parts.firstIndex(of: "app"),
+              appIndex + 1 < parts.count else { return nil }
+        let appId = parts[appIndex + 1]
+        return appId.allSatisfy(\.isNumber) ? appId : nil
     }
 
     private func buildContentJson() -> String {

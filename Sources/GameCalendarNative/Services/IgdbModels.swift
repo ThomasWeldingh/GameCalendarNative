@@ -19,9 +19,11 @@ struct IgdbGame: Codable {
     let involvedCompanies: [IgdbInvolvedCompany]?
     let websites: [IgdbWebsite]?
     let themes: [IgdbTheme]?
+    let similarGames: [Int]?
 
     enum CodingKeys: String, CodingKey {
         case id, name, cover, summary, platforms, genres, hypes, videos, screenshots, websites, themes
+        case similarGames = "similar_games"
         case firstReleaseDate = "first_release_date"
         case ageRatings = "age_ratings"
         case totalRatingCount = "total_rating_count"

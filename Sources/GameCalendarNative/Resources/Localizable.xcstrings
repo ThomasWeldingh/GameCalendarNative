@@ -1,0 +1,605 @@
+{
+  "sourceLanguage" : "nb",
+  "strings" : {
+    "Ønskelisten er tom" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Wishlist is empty" } }
+      }
+    },
+    "Klikk på hjertet på et spill for å legge det til" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Click the heart on a game to add it" } }
+      }
+    },
+    "Tilgjengelig nå" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Available now" } }
+      }
+    },
+    "Spill som kommer snart" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } }
+      }
+    },
+    "Alle ønsker (%lld)" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All wishes (%lld)" } }
+      }
+    },
+    "Del" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Share" } }
+      }
+    },
+    "Last ned kalender (%lld spill)" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Download calendar (%lld games)" } }
+      }
+    },
+    "Gratis" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Free" } }
+      }
+    },
+    "TBA" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TBA" } }
+      }
+    },
+    "I dag!" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Today!" } }
+      }
+    },
+    "I morgen!" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tomorrow!" } }
+      }
+    },
+    "om %lld dager" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "in %lld days" }
+        }
+      }
+    },
+    "🎮 Min spillønskeliste:\n" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "🎮 My game wishlist:\n" } }
+      }
+    },
+    "Filtrer spill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Filter games" } }
+      }
+    },
+    "Nullstill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reset" } }
+      }
+    },
+    "POPULARITET" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "POPULARITY" } }
+      }
+    },
+    "Alle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All" } }
+      }
+    },
+    "Kjente" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Known" } }
+      }
+    },
+    "Populære" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Popular" } }
+      }
+    },
+    "Topp" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Top" } }
+      }
+    },
+    "SPILLTYPE" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "GAME TYPE" } }
+      }
+    },
+    "Vis indie games" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show indie games" } }
+      }
+    },
+    "UTGIVER" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PUBLISHER" } }
+      }
+    },
+    "SJANGER" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "GENRE" } }
+      }
+    },
+    "Spillkalender" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Game Calendar" } }
+      }
+    },
+    "Sist oppdatert:" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last updated:" } }
+      }
+    },
+    "siden" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "ago" } }
+      }
+    },
+    "+%lld nye spill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "+%lld new games" } }
+      }
+    },
+    "+%lld nye" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "+%lld new" } }
+      }
+    },
+    "Importerer..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Importing..." } }
+      }
+    },
+    "Filtre" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Filters" } }
+      }
+    },
+    "Ferdig" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
+      }
+    },
+    "Innstillinger" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } }
+      }
+    },
+    "Utseende" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } }
+      }
+    },
+    "Aksentfarge" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Accent color" } }
+      }
+    },
+    "API-innstillinger" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "API settings" } }
+      }
+    },
+    "Backend-URL:" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Backend URL:" } }
+      }
+    },
+    "Varsler:" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Notifications:" } }
+      }
+    },
+    "Aktivert" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enabled" } }
+      }
+    },
+    "Deaktivert" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Disabled" } }
+      }
+    },
+    "Importer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Import" } }
+      }
+    },
+    "Importer spill fra IGDB" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Import games from IGDB" } }
+      }
+    },
+    "Varsler for ønskeliste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Wishlist notifications" } }
+      }
+    },
+    "Få varslinger når spill på ønskelisten får dato, oppdateringer, og påminnelser før lansering." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Get notifications when wishlist games get a date, updates, and reminders before launch." } }
+      }
+    },
+    "Fjern fra ønskeliste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove from wishlist" } }
+      }
+    },
+    "Legg til ønskeliste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to wishlist" } }
+      }
+    },
+    "Legg til i liste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to list" } }
+      }
+    },
+    "Del spill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Share game" } }
+      }
+    },
+    "Legg til i kalender" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to calendar" } }
+      }
+    },
+    "Åpne nettside" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open website" } }
+      }
+    },
+    "Lukk" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } }
+      }
+    },
+    "Utvikler" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Developer" } }
+      }
+    },
+    "Utgiver" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Publisher" } }
+      }
+    },
+    "Trailere" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Trailers" } }
+      }
+    },
+    "Nyheter" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "News" } }
+      }
+    },
+    "Skjermbilder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Screenshots" } }
+      }
+    },
+    "Nettside" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Website" } }
+      }
+    },
+    "Søker..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Searching..." } }
+      }
+    },
+    "Ingen treff med valgte filtre" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No results with selected filters" } }
+      }
+    },
+    "Prøv å fjerne noen filtre" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Try removing some filters" } }
+      }
+    },
+    "%lld treff" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld results" } }
+      }
+    },
+    "Popularitet — antall vurderinger" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Popularity — number of ratings" } }
+      }
+    },
+    "Mine lister" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "My lists" } }
+      }
+    },
+    "%lld spill" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld game" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld games" } }
+            }
+          }
+        }
+      }
+    },
+    "Tilbake" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Back" } }
+      }
+    },
+    "Ingen spill ennå" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No games yet" } }
+      }
+    },
+    "Legg til spill via spilldetaljer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add games from game details" } }
+      }
+    },
+    "Ingen spillslipp denne dagen" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No game releases this day" } }
+      }
+    },
+    "Sorter:" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sort:" } }
+      }
+    },
+    "Popularitet" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Popularity" } }
+      }
+    },
+    "A–Z" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A–Z" } }
+      }
+    },
+    "Ingen kommende spill uten dato" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No upcoming games without a date" } }
+      }
+    },
+    "Man" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mon" } }
+      }
+    },
+    "Tir" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tue" } }
+      }
+    },
+    "Ons" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Wed" } }
+      }
+    },
+    "Tor" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Thu" } }
+      }
+    },
+    "Fre" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fri" } }
+      }
+    },
+    "Lør" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sat" } }
+      }
+    },
+    "Søn" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sun" } }
+      }
+    },
+    "+%lld til" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "+%lld more" } }
+      }
+    },
+    "Søk spill..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Search games..." } }
+      }
+    },
+    "Søk etter spill..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Search for games..." } }
+      }
+    },
+    "Vis som liste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show as list" } }
+      }
+    },
+    "Vis som kort" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show as cards" } }
+      }
+    },
+    "I dag" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Today" } }
+      }
+    },
+    "Nye spill lagt til" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New games added" } }
+      }
+    },
+    "Fra siste import" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "From latest import" } }
+      }
+    },
+    "Ingen nye spill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No new games" } }
+      }
+    },
+    "Kjør en import for å hente nye spill fra IGDB" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Run an import to fetch new games from IGDB" } }
+      }
+    },
+    "Fullskjerm" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fullscreen" } }
+      }
+    },
+    "Kommende spill" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Upcoming games" } }
+      }
+    },
+    "Ingen spill denne uken" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No games this week" } }
+      }
+    },
+    "Åpne Game Calendar" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Game Calendar" } }
+      }
+    },
+    "Filter" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Filter" } }
+      }
+    },
+    "Måned" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Month" } }
+      }
+    },
+    "Uke" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Week" } }
+      }
+    },
+    "Dag" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Day" } }
+      }
+    },
+    "Kommende" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Upcoming" } }
+      }
+    },
+    "Ønskeliste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Wishlist" } }
+      }
+    },
+    "Lister" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lists" } }
+      }
+    },
+    "Nylig lagt til" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently added" } }
+      }
+    },
+    "Nylig" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recent" } }
+      }
+    },
+    "System" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "System" } }
+      }
+    },
+    "Lys" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Light" } }
+      }
+    },
+    "Mørk" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dark" } }
+      }
+    },
+    "Blå" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Blue" } }
+      }
+    },
+    "Lilla" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Purple" } }
+      }
+    },
+    "Grønn" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Green" } }
+      }
+    },
+    "Oransje" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Orange" } }
+      }
+    },
+    "Rød" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Red" } }
+      }
+    },
+    "Rosa" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pink" } }
+      }
+    },
+    "Turkis" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Teal" } }
+      }
+    },
+    "Indigo" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Indigo" } }
+      }
+    },
+    "Synkroniserer fra API..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Syncing from API..." } }
+      }
+    },
+    "Backend API utilgjengelig og IGDB-nøkler mangler" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Backend API unavailable and IGDB keys missing" } }
+      }
+    },
+    "Henter nylige spill fra IGDB..." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Fetching recent games from IGDB..." } }
+      }
+    },
+    "Spillønskeliste" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Game Wishlist" } }
+      }
+    },
+    "spill slippes\ndenne dagen" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "games released\nthis day" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

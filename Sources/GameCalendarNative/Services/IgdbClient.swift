@@ -71,7 +71,7 @@ struct IgdbClient {
     // MARK: - Private
 
     private var igdbFields: String {
-        "fields id, name, first_release_date, cover.url, summary, platforms.id, platforms.name, genres.name, age_ratings.category, age_ratings.rating, hypes, total_rating_count, total_rating, videos.video_id, videos.name, screenshots.url, involved_companies.developer, involved_companies.publisher, involved_companies.company.name, websites.category, websites.url, themes.id;"
+        "fields id, name, first_release_date, cover.url, summary, platforms.id, platforms.name, genres.name, age_ratings.category, age_ratings.rating, hypes, total_rating_count, total_rating, videos.video_id, videos.name, screenshots.url, involved_companies.developer, involved_companies.publisher, involved_companies.company.name, websites.category, websites.url, themes.id, similar_games;"
     }
 
     private func sinceFilter(_ date: Date?) -> String {
@@ -128,6 +128,7 @@ struct IgdbClient {
         let developer = g.involvedCompanies?.first { $0.developer == true }?.company?.name ?? nil
         let publisher = g.involvedCompanies?.first { $0.publisher == true }?.company?.name ?? nil
         let websiteUrl = extractWebsiteUrl(g.websites)
+        let steamAppId = extractSteamAppId(g.websites)
 
         let contentJson = (try? JSONEncoder().encode(g))
             .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
@@ -151,7 +152,9 @@ struct IgdbClient {
             developer: developer,
             publisher: publisher,
             websiteUrl: websiteUrl,
-            themeIds: (g.themes ?? []).map(\.id)
+            steamAppId: steamAppId,
+            themeIds: (g.themes ?? []).map(\.id),
+            similarGameIds: g.similarGames ?? []
         )
     }
 
@@ -161,6 +164,18 @@ struct IgdbClient {
             ?? sites.first { $0.category == 13 }.flatMap(\.url)  // Steam
             ?? sites.first { $0.category == 16 }.flatMap(\.url)  // Epic
             ?? sites.first { $0.category == 17 }.flatMap(\.url)  // GOG
+    }
+
+    /// Extract Steam App ID from IGDB website links (category 13 = Steam)
+    /// URL format: https://store.steampowered.com/app/123456/GameName
+    private func extractSteamAppId(_ sites: [IgdbWebsite]?) -> String? {
+        guard let steamUrl = sites?.first(where: { $0.category == 13 })?.url else { return nil }
+        let parts = steamUrl.components(separatedBy: "/")
+        guard let appIndex = parts.firstIndex(of: "app"),
+              appIndex + 1 < parts.count else { return nil }
+        let appId = parts[appIndex + 1]
+        // Verify it's numeric
+        return appId.allSatisfy(\.isNumber) ? appId : nil
     }
 
     private func extractAgeRating(_ ratings: [IgdbAgeRating]?) -> String? {

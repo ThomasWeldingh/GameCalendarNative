@@ -5,11 +5,11 @@ struct FilterView: View {
     @Bindable var state: AppState
 
     // Hardcoded lists matching web exactly (display label → DB value)
-    private let popularityPresets: [(label: String, value: Int)] = [
-        ("Alle", 0),
-        ("Kjente", 5),
-        ("Populære", 20),
-        ("Topp", 100)
+    private static let popularityPresets: [(label: String, value: Int)] = [
+        (String(localized: "Alle"), 0),
+        (String(localized: "Kjente"), 5),
+        (String(localized: "Populære"), 20),
+        (String(localized: "Topp"), 100),
     ]
 
     private let publishers: [(label: String, value: String)] = [
@@ -71,7 +71,7 @@ struct FilterView: View {
             // Popularity
             filterSection("POPULARITET") {
                 WrappingHStack(spacing: 6) {
-                    ForEach(popularityPresets, id: \.value) { preset in
+                    ForEach(Self.popularityPresets, id: \.value) { preset in
                         FilterChip(
                             label: preset.label,
                             isActive: state.minPopularity == preset.value
