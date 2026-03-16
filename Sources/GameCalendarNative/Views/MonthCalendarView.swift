@@ -266,8 +266,10 @@ struct GamePill: View {
     let game: GameRelease
     var compact: Bool = false
 
-    private var thumbnailSize: CGFloat { compact ? 14 : 20 }
-    private var fontSize: CGFloat { compact ? 10 : 11 }
+    private var pillHeight: CGFloat { 28 }
+    private var thumbnailWidth: CGFloat { 20 }
+    private var thumbnailHeight: CGFloat { 26 }
+    private var fontSize: CGFloat { 11 }
 
     var body: some View {
         HStack(spacing: 4) {
@@ -276,27 +278,27 @@ struct GamePill: View {
                 .fill(game.title.pillColor)
                 .frame(width: 3)
 
-            // Cover thumbnail
+            // Cover thumbnail (portrait aspect like a game cover)
             AsyncImage(url: URL(string: game.coverImageUrl ?? "")) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Image(systemName: "gamecontroller.fill")
-                    .font(.system(size: compact ? 7 : 9))
+                    .font(.system(size: 9))
                     .foregroundStyle(game.title.pillColor.opacity(0.6))
             }
-            .frame(width: thumbnailSize, height: thumbnailSize)
+            .frame(width: thumbnailWidth, height: thumbnailHeight)
             .clipShape(.rect(cornerRadius: 2))
 
             // Title (uppercase to match web)
             Text(game.title)
-                .font(.system(size: fontSize))
+                .font(.system(size: fontSize, weight: .medium))
                 .textCase(.uppercase)
                 .lineLimit(1)
                 .foregroundStyle(.primary)
         }
         .padding(.trailing, 4)
-        .padding(.vertical, compact ? 2 : 3)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: pillHeight)
         .background(.quaternary, in: .rect(cornerRadius: 3))
     }
 }
